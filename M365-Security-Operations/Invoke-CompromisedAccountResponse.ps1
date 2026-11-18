@@ -122,7 +122,7 @@ function Invoke-GraphPaged {
         else { $items.Add($resp) }
         $Uri = $resp.'@odata.nextLink'
     }
-    , $items
+    , $items.ToArray()
 }
 
 $actionLog = New-Object System.Collections.Generic.List[object]
