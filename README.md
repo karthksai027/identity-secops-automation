@@ -1,6 +1,6 @@
 # Karthik's Identity & SecOps Toolkit
 
-PowerShell and KQL I built to keep Active Directory and Microsoft Entra ID clean, find security gaps before someone else does, and respond when something looks wrong in Microsoft 365.
+Many Microsoft 365 incidents start with one account that has more access than it needs. This is the PowerShell and KQL I built to find those accounts across hybrid Active Directory and Microsoft Entra ID, close the gaps, and respond when something looks wrong.
 
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%20%7C%207.x-5391FE?logo=powershell&logoColor=white)
 ![Microsoft Graph](https://img.shields.io/badge/Microsoft%20Graph-REST-0078D4?logo=microsoft&logoColor=white)
@@ -12,7 +12,7 @@ PowerShell and KQL I built to keep Active Directory and Microsoft Entra ID clean
 
 ## How this started
 
-I look after Windows Server 2022 and an Entra ID tenant as a Global Administrator. Over time I collected a folder of scripts on my desktop for the questions I kept coming back to:
+I look after identity, endpoint and email security as a Microsoft 365 & Security Engineer, in a hybrid setup where on-prem Active Directory syncs to Microsoft Entra ID. Over time I collected a folder of scripts on my desktop for the questions I kept coming back to:
 
 - Which users haven't logged in for 90 days?
 - Which disabled accounts are still sitting there six months later?
@@ -33,6 +33,7 @@ This repo is the result. It's what I'd want to hand to the next admin who inheri
 | **Account hygiene** | Who's inactive, who's disabled but never cleaned up, who's in Domain Admins and shouldn't be | `Active-Directory-Governance` |
 | **AD attack surface** | Kerberoastable accounts, accounts without pre-auth, old krbtgt password, weak password policy | `Identity-Security-Posture` |
 | **Entra ID** | MFA strength, standing admin access, stale guests, Conditional Access gaps, expiring app secrets, risky app permissions, tenant settings | `Entra-ID-Governance` |
+| **Hybrid identity** | Synced admin accounts that should be cloud-only, whether Entra Connect sync is healthy, and disabling the on-prem account during an incident so the next sync doesn't undo it | `Entra-ID-Governance`, `M365-Security-Operations` |
 | **Incident response** | What to do in the first hour when an account looks compromised, and where attackers hide mail rules | `M365-Security-Operations` |
 | **Detection** | 12 KQL queries for Microsoft Sentinel, each mapped to MITRE ATT&CK | `SC-200-Threat-Hunting` |
 | **Day-to-day ops** | Hardware inventory, service account passwords on scheduled tasks, offsite backup | `Endpoint-Asset-Inventory`, `Windows-Server-Operations`, `Cloud-Backup-Automation` |
@@ -214,7 +215,11 @@ Want to run them on a schedule without storing passwords? See **[docs/Unattended
 
 ## About me
 
-I'm Karthik. I work as a Windows Server 2022 administrator and Microsoft Entra ID Global Administrator, and I'm moving into cloud identity and security operations. I'm currently studying for **SC-300** and **SC-200**.
+I'm Karthik, a Microsoft 365 & Security Engineer. I look after identity, endpoint and email security: rolling out MFA and Conditional Access in Entra ID, keeping devices compliant in Intune with Autopilot, automating provisioning, licensing and reporting with PowerShell and Microsoft Graph, and working alerts across Defender for Endpoint, Identity and Office 365.
+
+Before moving to the cloud I was a System Administrator running Active Directory, Group Policy, Windows Server, DNS/DHCP and SonicWall firewalls, so hybrid identity is where I started. I like building environments that are secure by default, so people can get on with their work without fighting the controls.
+
+I'm currently studying for **SC-300** and **SC-200**.
 
 If you spot a bug or have an idea, open an issue. I'd like to hear it.
 
