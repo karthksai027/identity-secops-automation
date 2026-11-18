@@ -22,7 +22,7 @@ I look after identity, endpoint and email security as a Microsoft 365 & Security
 
 They worked, but they were rough. Hard-coded paths, duplicate copies, a password parameter sitting in a plain text file. When I started studying for **SC-300** (Identity and Access Administrator) and **SC-200** (Security Operations Analyst), I went back to that folder and rebuilt it properly. Then I kept adding the things the exams kept pointing at: privileged roles, Conditional Access, risky app consents, mailbox forwarding, and hunting queries for Sentinel.
 
-This repo is the result. It's what I'd want to hand to the next admin who inherits a tenant.
+**From Sublime to GitHub.** The repo is new, but the work behind it isn't. The first versions of the core scripts were written in Sublime Text and run from my desktop long before they landed here. This is them cleaned up, tested and shared: what I'd want to hand to the next admin who inherits a tenant.
 
 ---
 
