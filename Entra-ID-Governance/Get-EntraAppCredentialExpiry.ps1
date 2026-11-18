@@ -86,7 +86,7 @@ function Invoke-GraphPaged {
         else { $items.Add($resp) }
         $Uri = $resp.'@odata.nextLink'
     }
-    , $items
+    , $items.ToArray()
 }
 #endregion
 
@@ -115,7 +115,8 @@ $report = foreach ($o in $objects) {
     $owners = $null
     if (-not $SkipOwners) {
         try {
-            $owners = (Invoke-GraphPaged -Uri $o.OwnerUri | ForEach-Object { if ($_.userPrincipalName) { $_.userPrincipalName } else { $_.displayName } }) -join '; '
+            $ownerList = Invoke-GraphPaged -Uri $o.OwnerUri
+            $owners = (@($ownerList) | ForEach-Object { if ($_.userPrincipalName) { $_.userPrincipalName } else { $_.displayName } }) -join '; '
         }
         catch { $owners = 'Unknown (lookup failed)' }
     }
