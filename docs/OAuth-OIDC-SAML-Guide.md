@@ -81,3 +81,5 @@ The sign-in logs in Entra ID always show the code, the app, the Conditional Acce
 - Tokens and SAML assertions are bearer credentials until they expire. Decode them locally, never in online decoders, and delete captures afterwards.
 - Prefer certificates, managed identities and workload identity federation over client secrets.
 - Keep redirect URIs exact, HTTPS, and on domains you control.
+
+When in doubt, check the sign-in logs. They're usually right.
