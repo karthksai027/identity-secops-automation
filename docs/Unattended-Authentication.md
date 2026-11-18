@@ -1,6 +1,6 @@
 # Running the scripts on a schedule
 
-When I run these by hand, I sign in with my own admin account and `Connect-MgGraph -Scopes ...`. For anything that runs on a schedule, I don't want a password stored anywhere. Here's how to set that up.
+When I run these by hand, I sign in with my own admin account and `Connect-MgGraph -Scopes ...`. For anything that runs on a schedule, I don't want a password stored anywhere. Stored passwords age like milk. Here's how to set that up.
 
 ## Microsoft Graph: an app registration with a certificate
 
