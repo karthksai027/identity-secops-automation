@@ -1,6 +1,6 @@
 # Threat hunting queries (KQL)
 
-These are the Microsoft Sentinel queries I wrote while studying for SC-200. Each one goes after an attack I'd actually expect to see against a hybrid Active Directory and Entra ID environment: someone spraying passwords, spamming MFA prompts, sneaking an app consent through, or hiding mail with an inbox rule.
+These are the Microsoft Sentinel and Defender XDR queries I wrote while studying for SC-200. Each one goes after an attack I'd actually expect to see against a hybrid Active Directory and Entra ID environment: someone spraying passwords, spamming MFA prompts, sneaking an app consent through, or hiding mail with an inbox rule.
 
 Every file starts with a short header: what it looks for, the MITRE ATT&CK technique, which table it needs, how to tune it, and what to do if it fires. I checked each query with the Kusto parser against the columns of the tables it uses.
 
@@ -10,6 +10,7 @@ Every file starts with a short header: what it looks for, the MITRE ATT&CK techn
 |---|---|---|---|
 | [`Identity/password_spray_detection.kql`](Identity/password_spray_detection.kql) | T1110.003 | SigninLogs | One IP failing against lots of accounts, and whether any of those accounts then got in from the same IP |
 | [`Identity/mfa_fatigue_detection.kql`](Identity/mfa_fatigue_detection.kql) | T1621 | SigninLogs | A pile of denied or ignored MFA prompts, and whether the user finally tapped "Approve" |
+| [`Identity/device_code_and_ropc_signins.kql`](Identity/device_code_and_ropc_signins.kql) | T1528, T1110 | SigninLogs | Sign-ins using the device code flow (used in device code phishing) or ROPC password grant, with first-time users highlighted |
 | [`Identity/legacy_authentication_signins.kql`](Identity/legacy_authentication_signins.kql) | T1078.004 | SigninLogs | Sign-ins over old protocols that can't do MFA (IMAP, POP, SMTP AUTH, ActiveSync basic) |
 | [`Identity/sign_in_from_new_country.kql`](Identity/sign_in_from_new_country.kql) | T1078.004 | SigninLogs | A successful sign-in from a country that user hasn't signed in from in the last 30 days |
 | [`Identity/privileged_role_assignment.kql`](Identity/privileged_role_assignment.kql) | T1098.003 | AuditLogs | Someone being given an Entra ID admin role, especially Global Admin or a change made outside PIM |
@@ -21,6 +22,16 @@ Every file starts with a short header: what it looks for, the MITRE ATT&CK techn
 | [`Email-and-Collaboration/inbox_rule_forwarding_or_hiding.kql`](Email-and-Collaboration/inbox_rule_forwarding_or_hiding.kql) | T1114.003, T1564.008 | OfficeActivity | New inbox rules or mailbox settings that forward, redirect or hide mail |
 | [`Email-and-Collaboration/mass_file_download.kql`](Email-and-Collaboration/mass_file_download.kql) | T1530, T1567 | OfficeActivity | Someone downloading far more from SharePoint or OneDrive than they normally do |
 
+### Defender XDR advanced hunting
+
+These three run in the Defender portal (Hunting > Advanced hunting) rather than Sentinel, or from PowerShell with `Defender-XDR\Invoke-DefenderAdvancedHunting.ps1`.
+
+| Query | MITRE ATT&CK | Table(s) | What it catches |
+|---|---|---|---|
+| [`Defender-XDR/suspicious_powershell_download.kql`](Defender-XDR/suspicious_powershell_download.kql) | T1059.001, T1105 | DeviceProcessEvents | PowerShell pulling code from the internet or running an encoded command, especially when Word, Outlook or a browser started it |
+| [`Defender-XDR/user_clicked_malicious_url.kql`](Defender-XDR/user_clicked_malicious_url.kql) | T1566.002, T1204.001 | EmailEvents, UrlClickEvents | Who actually clicked a link in an email flagged as phishing or malware |
+| [`Defender-XDR/dlp_alerts_by_user.kql`](Defender-XDR/dlp_alerts_by_user.kql) | T1567, T1048 | AlertInfo, AlertEvidence | People who keep tripping Purview DLP across email, SharePoint and endpoint |
+
 ## What you need connected
 
 | Table | How it gets into Sentinel |
@@ -28,6 +39,7 @@ Every file starts with a short header: what it looks for, the MITRE ATT&CK techn
 | `SigninLogs`, `AuditLogs` | The Microsoft Entra ID data connector (needs Entra ID P1 or P2) |
 | `SecurityEvent` | Windows Security Events via the Azure Monitor Agent, with a data collection rule on your domain controllers |
 | `OfficeActivity` | The Microsoft 365 connector, with Exchange and SharePoint turned on |
+| Defender XDR tables (`Device*`, `Email*`, `UrlClickEvents`, `Alert*`) | Available in Defender advanced hunting with the matching Defender licence; can also be streamed to Sentinel with the Microsoft Defender XDR connector |
 
 ## How I use them
 

@@ -1,0 +1,35 @@
+// =====================================================================================
+// Title       : OAuth application consent with high-risk permissions (illicit consent grant)
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
+// MITRE ATT&CK: T1528 Steal Application Access Token
+// Data source : AuditLogs
+// Description : Illicit consent attacks trick users into granting a malicious app access to
+//               mail or files. This query lists every consent event, the permissions granted,
+//               whether it was admin (tenant-wide) consent, and flags high-risk scopes.
+// Response    : Revoke the grant (Remove-MgOauth2PermissionGrant), disable the service principal,
+//               and check the app's activity. Cross-check with
+//               Entra-ID-Governance/Get-EntraRiskyAppPermission.ps1.
+// =====================================================================================
+let Lookback = 30d;
+let HighRiskScopes = dynamic([
+    "Mail.Read", "Mail.ReadWrite", "Mail.Send", "MailboxSettings.ReadWrite", "Files.Read.All",
+    "Files.ReadWrite.All", "Sites.ReadWrite.All", "Directory.ReadWrite.All", "Directory.AccessAsUser.All",
+    "User.ReadWrite.All", "Application.ReadWrite.All", "AppRoleAssignment.ReadWrite.All",
+    "RoleManagement.ReadWrite.Directory", "full_access_as_user", "EWS.AccessAsUser.All", "offline_access"
+]);
+AuditLogs
+| where TimeGenerated > ago(Lookback)
+| where OperationName == "Consent to application"
+| extend ConsentedBy = tostring(InitiatedBy.user.userPrincipalName)
+| extend ConsentIP = tostring(InitiatedBy.user.ipAddress)
+| extend AppName = tostring(TargetResources[0].displayName)
+| extend AppObjectId = tostring(TargetResources[0].id)
+| mv-apply Prop = TargetResources[0].modifiedProperties on (
+    summarize
+        IsAdminConsent = take_anyif(tostring(Prop.newValue), tostring(Prop.displayName) == "ConsentContext.IsAdminConsent"),
+        Permissions = take_anyif(tostring(Prop.newValue), tostring(Prop.displayName) == "ConsentAction.Permissions")
+  )
+| extend IsAdminConsent = trim(@'"', IsAdminConsent) =~ "True"
+| extend HighRisk = Permissions has_any (HighRiskScopes)
+| project TimeGenerated, AppName, AppObjectId, ConsentedBy, ConsentIP, IsAdminConsent, HighRisk, Result, Permissions
+| order by HighRisk desc, TimeGenerated desc

@@ -8,6 +8,8 @@ When I run these by hand, I sign in with my own admin account and `Connect-MgGra
 2. Under **API permissions**, add only the **Application** permissions the scheduled scripts need, then grant admin consent. For the read-only reports that's:
    `User.Read.All`, `AuditLog.Read.All`, `UserAuthenticationMethod.Read.All`, `RoleManagement.Read.Directory`,
    `Directory.Read.All`, `Application.Read.All`, `Policy.Read.All`.
+   For the Defender XDR and Intune reports add `SecurityIncident.Read.All`, `ThreatHunting.Read.All` and
+   `DeviceManagementManagedDevices.Read.All` (+ `DeviceManagementServiceConfig.Read.All` for Autopilot).
 3. Upload a certificate (public key only). Keep the private key in the local machine certificate store on the server that runs the task, marked as non-exportable.
 4. Connect before running a script:
 
@@ -20,13 +22,16 @@ The scripts notice you're already connected and skip their own sign-in.
 
 If the job runs on an Azure VM or in Azure Automation, use a **managed identity** instead (`Connect-MgGraph -Identity`). Then there's no certificate to renew either.
 
-## Exchange Online
+## Exchange Online and Purview
 
 ```powershell
 Connect-ExchangeOnline -AppId '<app-id>' -Organization 'contoso.onmicrosoft.com' -CertificateThumbprint '<thumbprint>' -ShowBanner:$false
+
+# Purview DLP report (Security & Compliance PowerShell)
+Connect-IPPSSession -AppId '<app-id>' -Organization 'contoso.onmicrosoft.com' -CertificateThumbprint '<thumbprint>'
 ```
 
-The app needs the `Exchange.ManageAsApp` application permission and an Exchange role such as **View-Only Organization Management** (or Global Reader).
+The app needs the `Exchange.ManageAsApp` application permission and an Exchange role such as **View-Only Organization Management** (or Global Reader). For the DLP report, also assign it the **Compliance Administrator** role or Global Reader.
 
 ## Active Directory and Task Scheduler
 

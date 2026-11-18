@@ -1,0 +1,39 @@
+// =====================================================================================
+// Title       : Inbox rules or mailbox settings that forward, redirect or hide mail (BEC)
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
+// MITRE ATT&CK: T1114.003 Email Collection: Email Forwarding Rule; T1564.008 Hide Artifacts: Email Hiding Rules
+// Data source : OfficeActivity (Microsoft 365 connector, Exchange workload)
+// Description : Detects New-InboxRule / Set-InboxRule / Set-Mailbox operations that add forwarding,
+//               redirection, deletion or moves to rarely viewed folders - the classic business
+//               email compromise persistence step. Rules created in Outlook desktop appear as
+//               "UpdateInboxRules" with a different payload and are listed separately.
+// Response    : Disable the rule, check the creating IP against SigninLogs, and run
+//               M365-Security-Operations/Get-MailboxForwardingAudit.ps1 tenant-wide.
+// =====================================================================================
+let Lookback = 7d;
+let SuspiciousKeys = dynamic(["ForwardTo", "RedirectTo", "ForwardAsAttachmentTo", "ForwardingSmtpAddress",
+                              "ForwardingAddress", "DeleteMessage", "MoveToFolder"]);
+OfficeActivity
+| where TimeGenerated > ago(Lookback)
+| where OfficeWorkload == "Exchange"
+| where Operation in~ ("New-InboxRule", "Set-InboxRule", "Set-Mailbox", "UpdateInboxRules")
+| where Operation =~ "UpdateInboxRules" or Parameters has_any (SuspiciousKeys)
+| mv-apply P = todynamic(Parameters) on (
+    summarize Params = make_bag(bag_pack(tostring(P.Name), tostring(P.Value)))
+  )
+| extend ForwardTarget = coalesce(tostring(Params.ForwardTo), tostring(Params.RedirectTo),
+                                  tostring(Params.ForwardAsAttachmentTo), tostring(Params.ForwardingSmtpAddress))
+| extend RuleName = tostring(Params.Name)
+| extend MovesTo = tostring(Params.MoveToFolder)
+| extend Deletes = tostring(Params.DeleteMessage) =~ "True"
+| extend Keywords = coalesce(tostring(Params.SubjectContainsWords), tostring(Params.SubjectOrBodyContainsWords), tostring(Params.BodyContainsWords))
+| extend Mailbox = coalesce(tostring(Params.Identity), tostring(Params.Mailbox), UserId)
+| extend Severity = case(
+    isnotempty(ForwardTarget), "High",
+    Keywords has_any ("invoice", "payment", "bank", "wire", "password", "security", "phish"), "High",
+    Deletes or MovesTo has_any ("RSS", "Archive", "Conversation History", "Junk"), "Medium",
+    "Low")
+| extend SeverityRank = case(Severity == "High", 1, Severity == "Medium", 2, 3)
+| project TimeGenerated, Severity, SeverityRank, Operation, UserId, Mailbox, ClientIP, RuleName, ForwardTarget, MovesTo, Deletes, Keywords, Parameters
+| order by SeverityRank asc, TimeGenerated desc
+| project-away SeverityRank

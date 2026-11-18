@@ -1,0 +1,41 @@
+// =====================================================================================
+// Title       : Device code flow and ROPC (password grant) sign-ins
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
+// MITRE ATT&CK: T1528 Steal Application Access Token; T1110 Brute Force
+// Data source : SigninLogs (AuthenticationProtocol column)
+// Description : Two OAuth 2.0 flows are favourites for attackers because they skip the normal
+//               interactive sign-in page:
+//                 - Device code flow: the victim is phished into typing a code at microsoft.com/devicelogin,
+//                   and the attacker's device receives the tokens (device code phishing).
+//                 - ROPC (resource owner password credentials): an app posts a username and password
+//                   straight to the token endpoint, which password spray tools love.
+//               Legitimate uses exist (Teams Rooms, some CLI tools, old scripts), so this lists who
+//               uses each flow, from where, with which app, and highlights first-time use.
+// Tuning      : Once you know your legitimate device code users, block the flow for everyone else
+//               with the Conditional Access "Authentication flows" condition.
+// Response    : Unexpected success = revoke sessions and investigate
+//               (M365-Security-Operations\Invoke-CompromisedAccountResponse.ps1).
+// =====================================================================================
+let DetectionWindow = 7d;
+let BaselineWindow = 30d;
+let Flows = dynamic(["deviceCode", "ropc"]);
+let KnownUsers = SigninLogs
+    | where TimeGenerated between (ago(DetectionWindow + BaselineWindow) .. ago(DetectionWindow))
+    | where AuthenticationProtocol in (Flows) and ResultType == "0"
+    | distinct UserPrincipalName, AuthenticationProtocol;
+SigninLogs
+| where TimeGenerated > ago(DetectionWindow)
+| where AuthenticationProtocol in (Flows)
+| extend Outcome = iff(ResultType == "0", "Success", strcat("Failure ", ResultType))
+| summarize
+    Attempts = count(),
+    Successes = countif(ResultType == "0"),
+    Apps = make_set(AppDisplayName, 10),
+    IPs = make_set(IPAddress, 10),
+    Countries = make_set(tostring(LocationDetails.countryOrRegion), 10),
+    LastSeen = max(TimeGenerated)
+    by UserPrincipalName, AuthenticationProtocol
+| join kind=leftouter (KnownUsers | extend SeenBefore = true) on UserPrincipalName, AuthenticationProtocol
+| extend FirstTimeUse = isnull(SeenBefore)
+| project UserPrincipalName, Flow = AuthenticationProtocol, FirstTimeUse, Attempts, Successes, Apps, IPs, Countries, LastSeen
+| order by FirstTimeUse desc, Successes desc
