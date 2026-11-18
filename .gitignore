@@ -1,0 +1,27 @@
+# ---- Script output: never commit real reports, they contain user, host and network data ----
+Reports/
+Logs/
+IR-Cases/
+*.csv
+*.log
+*.html
+!docs/**/*.html
+
+# ---- Secrets and local config ----
+*.pfx
+*.pem
+*.key
+*.cer
+.env
+*.secret.*
+*credentials*
+*.local.ps1
+*.local.psd1
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+desktop.ini
