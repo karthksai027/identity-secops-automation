@@ -26,10 +26,15 @@
     .\Export-EntraConditionalAccessPolicy.ps1 -Verbose
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Module      : Microsoft.Graph.Authentication
     Scopes      : Policy.Read.All
     Entra role  : Global Reader, Security Reader or Conditional Access Administrator
     Licence     : Conditional Access requires Microsoft Entra ID P1.
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

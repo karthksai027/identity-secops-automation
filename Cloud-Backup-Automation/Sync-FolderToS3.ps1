@@ -52,9 +52,14 @@
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Scripts\Sync-FolderToS3.ps1" -SourcePath "D:\Projects" -BucketName "contoso-backup" -AwsProfile backup
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Requires    : AWS CLI v2 on PATH with a configured profile (or an EC2/SSM instance role).
     IAM policy  : s3:ListBucket on the bucket; s3:PutObject on bucket/*; s3:DeleteObject on bucket/* only if -Mirror is used.
     Run as      : a gMSA or dedicated service account, not a personal admin account.
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

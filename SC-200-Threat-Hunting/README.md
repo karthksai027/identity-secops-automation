@@ -1,45 +1,49 @@
-# SC-200 Threat Hunting Library (KQL)
+# Threat hunting queries (KQL)
 
-Hunting queries for **Microsoft Sentinel** (Log Analytics) covering the identity, endpoint and collaboration attacks that SC-200 focuses on. Each query has a header with the MITRE ATT&CK technique, the data source, tuning notes and the response action. Every query was checked with the Kusto language parser against the table schemas it uses.
+These are the Microsoft Sentinel queries I wrote while studying for SC-200. Each one goes after an attack I'd actually expect to see against an Active Directory and Entra ID environment: someone spraying passwords, spamming MFA prompts, sneaking an app consent through, or hiding mail with an inbox rule.
 
-## Queries
+Every file starts with a short header: what it looks for, the MITRE ATT&CK technique, which table it needs, how to tune it, and what to do if it fires. I checked each query with the Kusto parser against the columns of the tables it uses.
 
-| Query | MITRE ATT&CK | Table(s) | What it finds |
+## The queries
+
+| Query | MITRE ATT&CK | Table(s) | What it catches |
 |---|---|---|---|
-| [`Identity/password_spray_detection.kql`](Identity/password_spray_detection.kql) | T1110.003 | SigninLogs | One IP failing against many accounts, plus any account that then signed in successfully from it |
-| [`Identity/mfa_fatigue_detection.kql`](Identity/mfa_fatigue_detection.kql) | T1621 | SigninLogs | Bursts of denied or unanswered MFA prompts, and whether the user approved one afterwards |
-| [`Identity/legacy_authentication_signins.kql`](Identity/legacy_authentication_signins.kql) | T1078.004 | SigninLogs | Sign-ins over protocols that cannot do MFA (IMAP, POP, SMTP AUTH, ActiveSync basic) |
-| [`Identity/sign_in_from_new_country.kql`](Identity/sign_in_from_new_country.kql) | T1078.004 | SigninLogs | Successful sign-ins from a country not seen for that user in 30 days |
-| [`Identity/privileged_role_assignment.kql`](Identity/privileged_role_assignment.kql) | T1098.003 | AuditLogs | Entra ID role assignments, highlighting Tier 0 roles and changes made outside PIM |
-| [`Identity/oauth_consent_grant.kql`](Identity/oauth_consent_grant.kql) | T1528 | AuditLogs | App consents with high-risk permissions (illicit consent grant) |
-| [`Identity/mfa_method_registered_from_new_ip.kql`](Identity/mfa_method_registered_from_new_ip.kql) | T1098.005 | AuditLogs, SigninLogs | Security info registered from an IP the user has never signed in from |
-| [`Endpoint/kerberoasting_rc4_service_tickets.kql`](Endpoint/kerberoasting_rc4_service_tickets.kql) | T1558.003 | SecurityEvent (4769) | Bursts of RC4 service ticket requests from one account |
-| [`Endpoint/ad_brute_force_and_lockouts.kql`](Endpoint/ad_brute_force_and_lockouts.kql) | T1110 | SecurityEvent (4625, 4740) | On-premises brute force vs spray, with resulting lockouts |
-| [`Endpoint/ad_privileged_group_change.kql`](Endpoint/ad_privileged_group_change.kql) | T1098 | SecurityEvent (4728, 4732, 4756) | Members added to Domain Admins and other Tier 0 groups |
-| [`Email-and-Collaboration/inbox_rule_forwarding_or_hiding.kql`](Email-and-Collaboration/inbox_rule_forwarding_or_hiding.kql) | T1114.003, T1564.008 | OfficeActivity | Inbox rules or mailbox settings that forward, redirect or hide mail (BEC) |
-| [`Email-and-Collaboration/mass_file_download.kql`](Email-and-Collaboration/mass_file_download.kql) | T1530, T1567 | OfficeActivity | SharePoint / OneDrive download spikes compared with the user's own baseline |
+| [`Identity/password_spray_detection.kql`](Identity/password_spray_detection.kql) | T1110.003 | SigninLogs | One IP failing against lots of accounts, and whether any of those accounts then got in from the same IP |
+| [`Identity/mfa_fatigue_detection.kql`](Identity/mfa_fatigue_detection.kql) | T1621 | SigninLogs | A pile of denied or ignored MFA prompts, and whether the user finally tapped "Approve" |
+| [`Identity/legacy_authentication_signins.kql`](Identity/legacy_authentication_signins.kql) | T1078.004 | SigninLogs | Sign-ins over old protocols that can't do MFA (IMAP, POP, SMTP AUTH, ActiveSync basic) |
+| [`Identity/sign_in_from_new_country.kql`](Identity/sign_in_from_new_country.kql) | T1078.004 | SigninLogs | A successful sign-in from a country that user hasn't signed in from in the last 30 days |
+| [`Identity/privileged_role_assignment.kql`](Identity/privileged_role_assignment.kql) | T1098.003 | AuditLogs | Someone being given an Entra ID admin role, especially Global Admin or a change made outside PIM |
+| [`Identity/oauth_consent_grant.kql`](Identity/oauth_consent_grant.kql) | T1528 | AuditLogs | A user or admin granting an app permission to read mail, files or the directory |
+| [`Identity/mfa_method_registered_from_new_ip.kql`](Identity/mfa_method_registered_from_new_ip.kql) | T1098.005 | AuditLogs, SigninLogs | A new MFA method registered from an IP that user has never signed in from |
+| [`Endpoint/kerberoasting_rc4_service_tickets.kql`](Endpoint/kerberoasting_rc4_service_tickets.kql) | T1558.003 | SecurityEvent (4769) | One account asking for a burst of RC4 service tickets, the usual Kerberoasting pattern |
+| [`Endpoint/ad_brute_force_and_lockouts.kql`](Endpoint/ad_brute_force_and_lockouts.kql) | T1110 | SecurityEvent (4625, 4740) | On-prem brute force or spraying, and the lockouts it caused |
+| [`Endpoint/ad_privileged_group_change.kql`](Endpoint/ad_privileged_group_change.kql) | T1098 | SecurityEvent (4728, 4732, 4756) | Someone being added to Domain Admins or another high-privilege group |
+| [`Email-and-Collaboration/inbox_rule_forwarding_or_hiding.kql`](Email-and-Collaboration/inbox_rule_forwarding_or_hiding.kql) | T1114.003, T1564.008 | OfficeActivity | New inbox rules or mailbox settings that forward, redirect or hide mail |
+| [`Email-and-Collaboration/mass_file_download.kql`](Email-and-Collaboration/mass_file_download.kql) | T1530, T1567 | OfficeActivity | Someone downloading far more from SharePoint or OneDrive than they normally do |
 
-## Data connectors required
+## What you need connected
 
-| Table | How to get it into the workspace |
+| Table | How it gets into Sentinel |
 |---|---|
-| `SigninLogs`, `AuditLogs` | Microsoft Entra ID data connector (Entra ID diagnostic settings). Needs Entra ID P1/P2. |
-| `SecurityEvent` | Windows Security Events via AMA connector with a data collection rule on domain controllers ("Common" or "All Events"). |
-| `OfficeActivity` | Microsoft 365 (formerly Office 365) connector with Exchange and SharePoint enabled. |
+| `SigninLogs`, `AuditLogs` | The Microsoft Entra ID data connector (needs Entra ID P1 or P2) |
+| `SecurityEvent` | Windows Security Events via the Azure Monitor Agent, with a data collection rule on your domain controllers |
+| `OfficeActivity` | The Microsoft 365 connector, with Exchange and SharePoint turned on |
 
-## How to use
+## How I use them
 
-1. **Hunt:** paste a query into Sentinel > Logs (or Hunting > New query) and adjust the `let` variables at the top.
-2. **Detect:** promote stable queries to a Scheduled analytics rule. Map entities (Account = `UserPrincipalName`, IP = `IPAddress`) so incidents correlate.
-3. **Respond:** each header names the matching response script in this repository, for example `M365-Security-Operations/Invoke-CompromisedAccountResponse.ps1`.
+1. **Hunt.** Paste a query into Sentinel > Logs, change the `let` values at the top to suit your environment, and run it.
+2. **Alert.** Once a query is quiet enough, turn it into a scheduled analytics rule and map the account and IP so incidents link up.
+3. **Respond.** Each header points to the matching script in this repo, for example `Invoke-CompromisedAccountResponse.ps1` for a suspected account takeover.
 
-## How the scripts and queries work together
+## How the queries pair with the scripts
 
-| Posture (point-in-time, PowerShell) | Detection (continuous, KQL) |
+The PowerShell scripts show where the weak spots are today. The queries watch for someone trying to use them.
+
+| The script finds... | ...and the query watches for |
 |---|---|
-| `Get-ADSecurityPostureSummary.ps1` lists Kerberoastable accounts | `kerberoasting_rc4_service_tickets.kql` catches the attack against them |
-| `Get-ADPrivilegedGroupMember.ps1` shows who is in Domain Admins | `ad_privileged_group_change.kql` alerts when that changes |
-| `Get-EntraPrivilegedRoleReport.ps1` inventories role holders | `privileged_role_assignment.kql` alerts on new assignments |
-| `Get-EntraRiskyAppPermission.ps1` inventories app permissions | `oauth_consent_grant.kql` alerts on new risky consents |
-| `Get-MailboxForwardingAudit.ps1` finds existing forwarding | `inbox_rule_forwarding_or_hiding.kql` catches new rules as they are created |
-| `Get-EntraMfaStrengthReport.ps1` finds weak MFA | `mfa_fatigue_detection.kql` catches push bombing |
+| Kerberoastable accounts (`Get-ADSecurityPostureSummary.ps1`) | Someone Kerberoasting them (`kerberoasting_rc4_service_tickets.kql`) |
+| Who's in Domain Admins (`Get-ADPrivilegedGroupMember.ps1`) | Someone new being added (`ad_privileged_group_change.kql`) |
+| Who holds Entra ID admin roles (`Get-EntraPrivilegedRoleReport.ps1`) | New role assignments (`privileged_role_assignment.kql`) |
+| Apps with risky permissions (`Get-EntraRiskyAppPermission.ps1`) | New risky consents (`oauth_consent_grant.kql`) |
+| Existing mail forwarding (`Get-MailboxForwardingAudit.ps1`) | New forwarding or hiding rules (`inbox_rule_forwarding_or_hiding.kql`) |
+| Users with weak MFA (`Get-EntraMfaStrengthReport.ps1`) | MFA push bombing (`mfa_fatigue_detection.kql`) |

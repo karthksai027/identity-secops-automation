@@ -1,0 +1,44 @@
+// =====================================================================================
+// Title       : MFA fatigue / push bombing
+// MITRE ATT&CK: T1621 Multi-Factor Authentication Request Generation
+// Data source : SigninLogs
+// Description : After stealing a password, attackers send repeated MFA prompts hoping the
+//               user approves one. This query finds users with many denied or unanswered
+//               MFA prompts in a one-hour window and shows whether a successful MFA sign-in
+//               followed - the signal that the user gave in.
+// Tuning      : MinPrompts 5 is a reasonable start. Number matching in Microsoft Authenticator
+//               reduces (but does not eliminate) this risk.
+// Response    : If ApprovedAfterPrompts is true, treat as compromised: run
+//               M365-Security-Operations/Invoke-CompromisedAccountResponse.ps1.
+// =====================================================================================
+let Lookback = 1d;
+let MinPrompts = 5;
+let Prompts = SigninLogs
+    | where TimeGenerated > ago(Lookback)
+    | where ResultType == "500121"            // Authentication failed during strong authentication request
+    | extend Detail = tostring(Status.additionalDetails)
+    | summarize
+        TotalPrompts = count(),
+        Denied = countif(Detail has "declined"),
+        NoResponse = countif(Detail has "did not respond" or Detail has "timed out"),
+        FraudReported = countif(Detail has "fraud"),
+        SourceIPs = make_set(IPAddress, 10),
+        Countries = make_set(tostring(LocationDetails.countryOrRegion), 10),
+        FirstPrompt = min(TimeGenerated),
+        LastPrompt = max(TimeGenerated)
+        by UserPrincipalName, Window = bin(TimeGenerated, 1h)
+    | where TotalPrompts >= MinPrompts;
+let MfaSuccess = SigninLogs
+    | where TimeGenerated > ago(Lookback)
+    | where ResultType == "0" and AuthenticationRequirement == "multiFactorAuthentication"
+    | project UserPrincipalName, SuccessTime = TimeGenerated, SuccessIP = IPAddress;
+Prompts
+| join kind=leftouter MfaSuccess on UserPrincipalName
+| extend FollowedBySuccess = isnotnull(SuccessTime) and SuccessTime between (FirstPrompt .. (LastPrompt + 30m))
+| summarize
+    ApprovedCount = countif(FollowedBySuccess),
+    SuccessIPs = make_set_if(SuccessIP, FollowedBySuccess, 5)
+    by UserPrincipalName, Window, TotalPrompts, Denied, NoResponse, FraudReported,
+       SourceIPList = tostring(SourceIPs), CountryList = tostring(Countries), FirstPrompt, LastPrompt
+| extend ApprovedAfterPrompts = ApprovedCount > 0
+| order by ApprovedAfterPrompts desc, TotalPrompts desc

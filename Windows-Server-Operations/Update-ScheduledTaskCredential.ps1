@@ -38,8 +38,13 @@
     .\Update-ScheduledTaskCredential.ps1 -TaskName 'Report*' -GmsaAccount 'CONTOSO\svc-reports$' -WhatIf
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Permissions : Local administrator on the target computer.
     Module      : ScheduledTasks (built in to Windows 8 / Server 2012 and later)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : OAuth application consent with high-risk permissions (illicit consent grant)
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1528 Steal Application Access Token
 // Data source : AuditLogs
 // Description : Illicit consent attacks trick users into granting a malicious app access to

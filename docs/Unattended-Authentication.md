@@ -1,17 +1,14 @@
-# Running the scripts unattended
+# Running the scripts on a schedule
 
-Interactive runs use delegated sign-in (`Connect-MgGraph -Scopes ...`) and your own admin account.
-For scheduled runs, never store a user password. Use one of these options.
+When I run these by hand, I sign in with my own admin account and `Connect-MgGraph -Scopes ...`. For anything that runs on a schedule, I don't want a password stored anywhere. Here's how to set that up.
 
-## Microsoft Graph: app registration with a certificate
+## Microsoft Graph: an app registration with a certificate
 
 1. Create an app registration, for example `IdentitySecOps-Reporting`.
-2. Under **API permissions**, add only the **Application** permissions the scheduled scripts need,
-   then grant admin consent. For the read-only reports:
+2. Under **API permissions**, add only the **Application** permissions the scheduled scripts need, then grant admin consent. For the read-only reports that's:
    `User.Read.All`, `AuditLog.Read.All`, `UserAuthenticationMethod.Read.All`, `RoleManagement.Read.Directory`,
    `Directory.Read.All`, `Application.Read.All`, `Policy.Read.All`.
-3. Upload a certificate (public key only). Keep the private key in the local machine certificate store
-   of the server that runs the task, marked non-exportable.
+3. Upload a certificate (public key only). Keep the private key in the local machine certificate store on the server that runs the task, marked as non-exportable.
 4. Connect before running a script:
 
 ```powershell
@@ -19,10 +16,9 @@ Connect-MgGraph -ClientId '<app-id>' -TenantId '<tenant-id>' -CertificateThumbpr
 .\Entra-ID-Governance\Get-EntraStaleAccount.ps1 -OutputDirectory 'D:\Reports'
 ```
 
-The scripts detect the existing session and skip their own interactive sign-in.
+The scripts notice you're already connected and skip their own sign-in.
 
-On an Azure VM or in Azure Automation, use a **managed identity** instead (`Connect-MgGraph -Identity`),
-so there is no certificate to rotate.
+If the job runs on an Azure VM or in Azure Automation, use a **managed identity** instead (`Connect-MgGraph -Identity`). Then there's no certificate to renew either.
 
 ## Exchange Online
 
@@ -30,12 +26,11 @@ so there is no certificate to rotate.
 Connect-ExchangeOnline -AppId '<app-id>' -Organization 'contoso.onmicrosoft.com' -CertificateThumbprint '<thumbprint>' -ShowBanner:$false
 ```
 
-The app needs the `Exchange.ManageAsApp` application permission and an Exchange role such as
-**View-Only Organization Management** (or Global Reader).
+The app needs the `Exchange.ManageAsApp` application permission and an Exchange role such as **View-Only Organization Management** (or Global Reader).
 
 ## Active Directory and Task Scheduler
 
-Run AD reports under a **group Managed Service Account (gMSA)**. Windows rotates its password automatically.
+Run the AD reports under a **group Managed Service Account (gMSA)**. Windows changes its password for you, so there's nothing to rotate or leak.
 
 ```powershell
 # Once, on a domain controller
@@ -49,5 +44,4 @@ Install-ADServiceAccount svc-idreports
 
 ## AWS
 
-Use an EC2 instance profile or IAM Identity Center profile, or a named profile limited to the backup bucket.
-Never put access keys in the script or in Task Scheduler arguments.
+Use an EC2 instance profile, an IAM Identity Center profile, or a named profile that can only touch the backup bucket. Never put access keys in the script or in the Task Scheduler arguments.

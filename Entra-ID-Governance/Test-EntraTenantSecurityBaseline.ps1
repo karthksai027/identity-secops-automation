@@ -26,9 +26,14 @@
     .\Test-EntraTenantSecurityBaseline.ps1 | Format-Table Area, Check, Value, Status -AutoSize
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Module      : Microsoft.Graph.Authentication
     Scopes      : Policy.Read.All, RoleManagement.Read.Directory, Directory.Read.All
     Entra role  : Global Reader (least privilege, read-only)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

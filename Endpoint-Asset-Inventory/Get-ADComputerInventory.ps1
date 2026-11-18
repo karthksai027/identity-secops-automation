@@ -30,8 +30,13 @@
     .\Get-ADComputerInventory.ps1 | Where-Object { $_.IsStale -or $_.IsLegacyOS }
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Permissions : Read access to computer objects.
     Module      : ActiveDirectory (RSAT)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

@@ -36,9 +36,14 @@
     .\Get-ADPrivilegedGroupMember.ps1 | Where-Object Findings | Format-Table Group, SamAccountName, Findings
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Permissions : Read access to groups and users. Enterprise/Schema Admins are read from the
                   forest root domain, so the account needs read access there too.
     Module      : ActiveDirectory (RSAT)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

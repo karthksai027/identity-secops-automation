@@ -38,9 +38,14 @@
     .\Get-EntraAppCredentialExpiry.ps1 -DaysAhead 60 | Where-Object Status -ne 'Valid'
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Module      : Microsoft.Graph.Authentication
     Scopes      : Application.Read.All
     Entra role  : Global Reader or Application Administrator (read)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

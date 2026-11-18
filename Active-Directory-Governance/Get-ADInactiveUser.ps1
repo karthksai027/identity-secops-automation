@@ -36,8 +36,13 @@
     PSCustomObject per inactive user, and a timestamped CSV in OutputDirectory.
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Permissions : Read access to user objects (Domain Users is sufficient).
     Module      : ActiveDirectory (RSAT)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

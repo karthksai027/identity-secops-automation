@@ -37,9 +37,14 @@
     .\Get-ADHardwareInventory.ps1 -ComputerName pc01.contoso.com, pc02.contoso.com -Credential (Get-Credential)
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Permissions : Local administrator on target machines; read access to computer objects in AD.
     Requires    : WinRM enabled on targets (Enable-PSRemoting or GPO), TCP 5985/5986 open.
     Module      : ActiveDirectory (RSAT)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

@@ -39,8 +39,13 @@
     .\Get-ADSecurityPostureSummary.ps1 -ExportDetails -OutputDirectory D:\Audit
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Permissions : Read access to users, computers, groups and the domain object.
     Module      : ActiveDirectory (RSAT)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : Successful sign-in from a country never seen for the user
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1078.004 Valid Accounts: Cloud Accounts
 // Data source : SigninLogs
 // Description : Builds a 30-day baseline of countries each user successfully signs in from,

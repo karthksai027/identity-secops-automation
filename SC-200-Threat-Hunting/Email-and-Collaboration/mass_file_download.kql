@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : Unusual volume of SharePoint / OneDrive file downloads (possible exfiltration)
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1530 Data from Cloud Storage; T1567 Exfiltration Over Web Service
 // Data source : OfficeActivity (SharePoint workload)
 // Description : Compares each user's downloads in the last day with their own 14-day daily

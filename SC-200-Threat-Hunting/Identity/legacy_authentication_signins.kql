@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : Legacy (basic) authentication sign-ins
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1078.004 Valid Accounts: Cloud Accounts (MFA bypass via legacy protocols)
 // Data source : SigninLogs
 // Description : Legacy protocols (IMAP, POP3, SMTP AUTH, ActiveSync basic, older Office clients)

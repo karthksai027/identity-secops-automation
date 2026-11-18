@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : Inbox rules or mailbox settings that forward, redirect or hide mail (BEC)
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1114.003 Email Collection: Email Forwarding Rule; T1564.008 Hide Artifacts: Email Hiding Rules
 // Data source : OfficeActivity (Microsoft 365 connector, Exchange workload)
 // Description : Detects New-InboxRule / Set-InboxRule / Set-Mailbox operations that add forwarding,

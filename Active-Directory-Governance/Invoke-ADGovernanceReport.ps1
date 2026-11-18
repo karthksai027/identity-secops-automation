@@ -36,8 +36,13 @@
     .\Invoke-ADGovernanceReport.ps1 -OutputRoot '\\fileserver\Audit$\AD' -Verbose
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Permissions : Read access to AD users, computers and groups.
     Module      : ActiveDirectory (RSAT)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1
@@ -119,7 +124,7 @@ $runRows     = ($summary | ForEach-Object { "<tr><td>$($_.Report)</td><td>$($_.R
 $html = @"
 <html><head><meta charset='utf-8'><title>AD Governance Report</title>$style</head><body>
 <h1>Active Directory Governance Report</h1>
-<p>Generated $(Get-Date -Format 'yyyy-MM-dd HH:mm') by $([Environment]::UserName). Detailed CSVs are in this folder.</p>
+<p>Generated $(Get-Date -Format 'yyyy-MM-dd HH:mm') by $([Environment]::UserName) with Karthik's Identity &amp; SecOps Toolkit. Detailed CSVs are in this folder.</p>
 <h2>Key metrics</h2><table><tr><th>Metric</th><th>Value</th></tr>$metricRows</table>
 <h2>Security posture</h2><table><tr><th>Category</th><th>Check</th><th>Value</th><th>Status</th><th>Recommendation</th></tr>$postureRows</table>
 <h2>Run status</h2><table><tr><th>Report</th><th>Rows</th><th>Status</th><th>Error</th></tr>$runRows</table>

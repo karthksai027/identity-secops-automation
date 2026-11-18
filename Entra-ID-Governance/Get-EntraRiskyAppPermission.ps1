@@ -28,9 +28,14 @@
     .\Get-EntraRiskyAppPermission.ps1 -HighRiskOnly | Format-Table App, PermissionType, HighRiskPermissions, Findings
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Module      : Microsoft.Graph.Authentication
     Scopes      : Application.Read.All, Directory.Read.All
     Entra role  : Global Reader, Security Reader or Cloud Application Administrator (read)
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

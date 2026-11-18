@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : MFA fatigue / push bombing
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1621 Multi-Factor Authentication Request Generation
 // Data source : SigninLogs
 // Description : After stealing a password, attackers send repeated MFA prompts hoping the

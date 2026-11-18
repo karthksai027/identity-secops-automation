@@ -1,32 +1,45 @@
-# Identity & Security Operations Automation
+# Karthik's Identity & SecOps Toolkit
 
-PowerShell and KQL for Active Directory and Microsoft Entra ID governance, identity security, and Microsoft 365 threat detection and response. Built from hands-on Windows Server 2022 and Entra ID Global Administrator work, and aligned to **SC-300 (Identity and Access Administrator)** and **SC-200 (Security Operations Analyst)**.
+PowerShell and KQL I built to keep Active Directory and Microsoft Entra ID clean, find security gaps before someone else does, and respond when something looks wrong in Microsoft 365.
 
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%20%7C%207.x-5391FE?logo=powershell&logoColor=white)
 ![Microsoft Graph](https://img.shields.io/badge/Microsoft%20Graph-REST-0078D4?logo=microsoft&logoColor=white)
 ![KQL](https://img.shields.io/badge/KQL-Microsoft%20Sentinel-0078D4)
-![Focus](https://img.shields.io/badge/Focus-SC--300%20%7C%20SC--200-2E7D32)
+![Studying](https://img.shields.io/badge/Studying-SC--300%20%7C%20SC--200-2E7D32)
 ![Quality](https://github.com/karthksai027/identity-secops-automation/actions/workflows/quality.yml/badge.svg)
 
 ---
 
-## Why this repository exists
+## How this started
 
-Most identity incidents I have dealt with did not start with a sophisticated exploit. They started with an account nobody disabled, a password that never expired, a service account with an SPN, an app that got consent to read mail, or a user who only had SMS for MFA.
+I look after Windows Server 2022 and an Entra ID tenant as a Global Administrator. Over time I collected a folder of scripts on my desktop for the questions I kept coming back to:
 
-This toolkit finds those gaps **on a schedule instead of during an incident**, then detects and responds when someone tries to use them:
+- Which users haven't logged in for 90 days?
+- Which disabled accounts are still sitting there six months later?
+- Who still doesn't have MFA set up, or only has SMS?
+- What hardware do we actually have, and who's using it?
+- Is last night's backup in S3?
 
-| Stage | What is covered | Folder |
-|---|---|---|
-| **Govern** | Account lifecycle, access reviews, privileged access, guest lifecycle | `Active-Directory-Governance`, `Entra-ID-Governance` |
-| **Harden** | AD attack surface, tenant settings, Conditional Access coverage, MFA strength, app permissions | `Identity-Security-Posture`, `Entra-ID-Governance` |
-| **Detect** | 12 KQL hunting queries mapped to MITRE ATT&CK | `SC-200-Threat-Hunting` |
-| **Respond** | Compromised-account playbook, BEC mailbox forwarding audit | `M365-Security-Operations` |
-| **Operate** | Endpoint asset inventory, service account credential rotation, offsite backup | `Endpoint-Asset-Inventory`, `Windows-Server-Operations`, `Cloud-Backup-Automation` |
+They worked, but they were rough. Hard-coded paths, duplicate copies, a password parameter sitting in a plain text file. When I started studying for **SC-300** (Identity and Access Administrator) and **SC-200** (Security Operations Analyst), I went back to that folder and rebuilt it properly. Then I kept adding the things the exams kept pointing at: privileged roles, Conditional Access, risky app consents, mailbox forwarding, and hunting queries for Sentinel.
+
+This repo is the result. It's what I'd want to hand to the next admin who inherits a tenant.
 
 ---
 
-## Repository structure
+## What it covers
+
+| Area | What I wanted to answer | Folder |
+|---|---|---|
+| **Account hygiene** | Who's inactive, who's disabled but never cleaned up, who's in Domain Admins and shouldn't be | `Active-Directory-Governance` |
+| **AD attack surface** | Kerberoastable accounts, accounts without pre-auth, old krbtgt password, weak password policy | `Identity-Security-Posture` |
+| **Entra ID** | MFA strength, standing admin access, stale guests, Conditional Access gaps, expiring app secrets, risky app permissions, tenant settings | `Entra-ID-Governance` |
+| **Incident response** | What to do in the first hour when an account looks compromised, and where attackers hide mail rules | `M365-Security-Operations` |
+| **Detection** | 12 KQL queries for Microsoft Sentinel, each mapped to MITRE ATT&CK | `SC-200-Threat-Hunting` |
+| **Day-to-day ops** | Hardware inventory, service account passwords on scheduled tasks, offsite backup | `Endpoint-Asset-Inventory`, `Windows-Server-Operations`, `Cloud-Backup-Automation` |
+
+---
+
+## Repository layout
 
 ```text
 .
@@ -35,7 +48,7 @@ This toolkit finds those gaps **on a schedule instead of during an incident**, t
 │   ├── Get-ADStaleDisabledUser.ps1
 │   ├── Get-ADUserInventory.ps1
 │   ├── Get-ADPrivilegedGroupMember.ps1
-│   └── Invoke-ADGovernanceReport.ps1        # runs the AD reports + HTML summary
+│   └── Invoke-ADGovernanceReport.ps1        # runs the AD reports and builds an HTML summary
 ├── Identity-Security-Posture/
 │   └── Get-ADSecurityPostureSummary.ps1
 ├── Entra-ID-Governance/
@@ -49,7 +62,7 @@ This toolkit finds those gaps **on a schedule instead of during an incident**, t
 ├── M365-Security-Operations/
 │   ├── Get-MailboxForwardingAudit.ps1
 │   └── Invoke-CompromisedAccountResponse.ps1
-├── SC-200-Threat-Hunting/                   # KQL - see its own README
+├── SC-200-Threat-Hunting/                   # KQL, with its own README
 │   ├── Identity/                (7 queries)
 │   ├── Endpoint/                (3 queries)
 │   └── Email-and-Collaboration/ (2 queries)
@@ -61,8 +74,8 @@ This toolkit finds those gaps **on a schedule instead of during an incident**, t
 ├── Cloud-Backup-Automation/
 │   └── Sync-FolderToS3.ps1
 ├── docs/Unattended-Authentication.md
-├── tests/Repository.Tests.ps1               # Pester quality gates
-├── .github/workflows/quality.yml            # PSScriptAnalyzer + Pester on every push
+├── tests/Repository.Tests.ps1
+├── .github/workflows/quality.yml
 ├── PSScriptAnalyzerSettings.psd1
 ├── SECURITY.md
 └── LICENSE
@@ -70,64 +83,64 @@ This toolkit finds those gaps **on a schedule instead of during an incident**, t
 
 ---
 
-## Script index
+## The scripts
 
-### Active Directory governance and posture
+### Active Directory
 
-| Script | Problem it solves | Requirements |
+| Script | What it does | You'll need |
 |---|---|---|
-| `Get-ADInactiveUser.ps1` | Enabled accounts with no logon in N days (default 90), including accounts that never signed in. Dormant accounts are a common password-spray foothold. | `ActiveDirectory` module. Domain Users read access. |
-| `Get-ADStaleDisabledUser.ps1` | Accounts disabled for 180+ days but never deprovisioned; shows how many groups they still belong to. | `ActiveDirectory` module. Read access. |
-| `Get-ADUserInventory.ps1` | Baseline user export for access reviews and HR reconciliation (password age, never-expires, manager). | `ActiveDirectory` module. Read access. |
-| `Get-ADPrivilegedGroupMember.ps1` | Recursive members of all Tier 0 groups (looked up by well-known SID), flagged for inactivity, old passwords, SPNs, and missing "sensitive and cannot be delegated". | `ActiveDirectory` module. Read access including the forest root domain. |
-| `Get-ADSecurityPostureSummary.ps1` | 18-check AD risk scorecard: Kerberoastable and AS-REP roastable users, PASSWD_NOTREQD, unconstrained delegation, krbtgt password age, lockout policy and more. `-ExportDetails` lists the affected accounts. | `ActiveDirectory` module. Read access. |
-| `Invoke-ADGovernanceReport.ps1` | Runs the five AD reports above plus computer inventory into one dated folder with an HTML summary for managers and auditors. | As above. |
+| `Get-ADInactiveUser.ps1` | Lists enabled accounts with no logon in 90 days (you can change the number), including ones that never logged in at all. These are the accounts password sprays love. | `ActiveDirectory` module, normal read access |
+| `Get-ADStaleDisabledUser.ps1` | Finds accounts that were disabled months ago but never removed, and shows how many groups they still belong to. Skips built-ins like krbtgt and Guest. | `ActiveDirectory` module, read access |
+| `Get-ADUserInventory.ps1` | A clean export of every user with department, manager, last logon and password age. Handy for access reviews or checking against HR's list. | `ActiveDirectory` module, read access |
+| `Get-ADPrivilegedGroupMember.ps1` | Shows everyone in Domain Admins, Enterprise Admins and the other high-privilege groups, including people who get there through nested groups. Flags anyone inactive, with an old password, with an SPN, or not protected from delegation. | `ActiveDirectory` module, read access to the forest root |
+| `Get-ADSecurityPostureSummary.ps1` | 18 quick checks that give each area an OK, Review or Risk rating with a short "here's what to do" note. Add `-ExportDetails` to get the actual account lists. | `ActiveDirectory` module, read access |
+| `Invoke-ADGovernanceReport.ps1` | Runs the AD reports above in one go and drops them in a dated folder with an HTML summary I can send to a manager. | Same as above |
 
-### Microsoft Entra ID governance (SC-300)
+### Microsoft Entra ID
 
-| Script | Problem it solves | Graph scopes / role |
+| Script | What it does | Graph permissions / role |
 |---|---|---|
-| `Get-EntraMfaStrengthReport.ps1` | Grades each user's MFA as Phishing-resistant / Strong / Weak / None and flags admins without phishing-resistant MFA. Uses the registration details report (P1/P2) or per-user methods (any licence). | `AuditLog.Read.All`, `UserAuthenticationMethod.Read.All`. Global Reader. |
-| `Get-EntraPrivilegedRoleReport.ps1` | All active and PIM-eligible role assignments. Flags standing Tier 0 access, synced admin accounts, guests and service principals in roles, inactive admins, Global Admin count. | `RoleManagement.Read.Directory`, `Directory.Read.All`, `AuditLog.Read.All`. Global Reader. P2 for PIM data. |
-| `Get-EntraStaleAccount.ps1` | Inactive members and guests from `signInActivity`, guests whose invitation is still pending, and stale accounts that still hold licences. | `User.Read.All`, `AuditLog.Read.All`. Global Reader. P1. |
-| `Export-EntraConditionalAccessPolicy.ps1` | JSON backup of every CA policy and named location (policy as code), summary CSV, and a gap analysis against Microsoft's baseline policies. | `Policy.Read.All`. Global Reader / Security Reader. |
-| `Get-EntraAppCredentialExpiry.ps1` | Expired, expiring and over-long client secrets and certificates on app registrations and enterprise apps, plus newly added credentials and ownerless apps. | `Application.Read.All`. Global Reader. |
-| `Get-EntraRiskyAppPermission.ps1` | Delegated and application permissions to Microsoft Graph and Exchange Online; flags high-risk scopes, tenant-wide consent, third-party and unverified publishers (illicit consent grant review). | `Application.Read.All`, `Directory.Read.All`. Global Reader. |
-| `Test-EntraTenantSecurityBaseline.ps1` | Tenant scorecard: security defaults vs CA, Global Admin count, SMS/voice enabled, FIDO2, TAP, methods migration, user consent, guest invitation and access settings, app registration, MSOnline block, sync health. | `Policy.Read.All`, `RoleManagement.Read.Directory`, `Directory.Read.All`. Global Reader. |
+| `Get-EntraMfaStrengthReport.ps1` | Sorts every user into phishing-resistant, strong, weak (SMS or voice) or no MFA. Calls out admins who don't have phishing-resistant MFA yet. | `AuditLog.Read.All`, `UserAuthenticationMethod.Read.All`. Global Reader. |
+| `Get-EntraPrivilegedRoleReport.ps1` | Lists every admin role assignment, active and PIM-eligible. Flags standing Global Admin access, synced on-prem accounts holding admin roles, guests or apps with roles, and admins who haven't signed in for a while. | `RoleManagement.Read.Directory`, `Directory.Read.All`, `AuditLog.Read.All`. Global Reader. P2 for PIM data. |
+| `Get-EntraStaleAccount.ps1` | Finds members and guests who haven't signed in, guests who never accepted their invite, and inactive accounts still using a licence. | `User.Read.All`, `AuditLog.Read.All`. Global Reader. P1. |
+| `Export-EntraConditionalAccessPolicy.ps1` | Backs up every Conditional Access policy to JSON so you can see what changed and roll back. Also checks for the policies I'd expect every tenant to have. | `Policy.Read.All`. Global Reader. |
+| `Get-EntraAppCredentialExpiry.ps1` | Shows app secrets and certificates that have expired, are about to, or were set to last far too long. Also flags brand-new credentials and apps with no owner. | `Application.Read.All`. Global Reader. |
+| `Get-EntraRiskyAppPermission.ps1` | Looks at what every app is allowed to do in Microsoft Graph and Exchange Online and highlights the dangerous ones, especially third-party apps from unverified publishers. | `Application.Read.All`, `Directory.Read.All`. Global Reader. |
+| `Test-EntraTenantSecurityBaseline.ps1` | A pass/fail check of tenant settings: security defaults, Global Admin count, SMS and voice, FIDO2, guest invites, user consent, app registration, sync health and more. | `Policy.Read.All`, `RoleManagement.Read.Directory`, `Directory.Read.All`. Global Reader. |
 
-### Microsoft 365 security operations (SC-200)
+### Microsoft 365 incident response
 
-| Script | Problem it solves | Requirements |
+| Script | What it does | You'll need |
 |---|---|---|
-| `Get-MailboxForwardingAudit.ps1` | Business email compromise persistence: external mailbox forwarding, inbox rules that forward/redirect externally, and rules that hide mail (delete, move to RSS/Archive, obscure names, finance keywords). Also checks tenant auto-forwarding settings. | `ExchangeOnlineManagement` v3. Global Reader or View-Only Organization Management. |
-| `Invoke-CompromisedAccountResponse.ps1` | First-hour playbook. Always collects evidence (sign-ins, MFA methods, audit events, roles, risk state, inbox rules) into a case folder. With `-Contain`: blocks sign-in (or disables the on-prem account for synced users), revokes sessions, confirms compromise in Identity Protection, removes malicious forwarding. Supports `-WhatIf`. | Graph: `AuditLog.Read.All`, `UserAuthenticationMethod.Read.All`, `User.ReadWrite.All` (containment), `IdentityRiskyUser.ReadWrite.All`. User Administrator / Security Operator. |
+| `Get-MailboxForwardingAudit.ps1` | Looks for the classic email-compromise tricks: mailboxes forwarding outside the company, inbox rules that forward or redirect, and rules that quietly delete or hide mail about invoices and payments. | `ExchangeOnlineManagement` v3. Global Reader or View-Only Organization Management. |
+| `Invoke-CompromisedAccountResponse.ps1` | My first-hour checklist as a script. By default it only gathers evidence (sign-ins, MFA methods, audit events, roles, risk level, inbox rules) into a case folder. With `-Contain` it blocks sign-in and kills sessions. Try it with `-WhatIf` first. | Graph read permissions, plus `User.ReadWrite.All` and `IdentityRiskyUser.ReadWrite.All` for containment. User Administrator / Security Operator. |
 
-### Infrastructure operations
+### Everyday infrastructure
 
-| Script | Problem it solves | Requirements |
+| Script | What it does | You'll need |
 |---|---|---|
-| `Get-ADComputerInventory.ps1` | All computer objects with role (DC / server / workstation), stale flag and out-of-support OS flag. | `ActiveDirectory` module. Read access. |
-| `Get-ADHardwareInventory.ps1` | Hardware asset register over WinRM/CIM for an OU or list: serial, model, CPU, RAM, disk, MACs, IP, current or last user. Unreachable machines are written to a separate CSV with the reason. | `ActiveDirectory` module. WinRM on targets. Local admin on targets. |
-| `Update-ScheduledTaskCredential.ps1` | Re-registers the run-as password after a service account rotation (prompted securely), or moves the task to a gMSA so no password is stored at all. `-WhatIf` supported. | `ScheduledTasks` module. Local admin. |
-| `Sync-FolderToS3.ps1` | Unattended, logged incremental backup to Amazon S3 with credential, bucket and source pre-checks, `-DryRun`, and an opt-in `-Mirror` (delete) mode that refuses to mirror an empty folder. | AWS CLI v2 with a named profile. `s3:ListBucket`, `s3:PutObject` (+ `s3:DeleteObject` for `-Mirror`). |
+| `Get-ADComputerInventory.ps1` | Every computer in AD, tagged as DC, server or workstation, with flags for stale machines and unsupported Windows versions. | `ActiveDirectory` module, read access |
+| `Get-ADHardwareInventory.ps1` | Connects to each machine over WinRM and builds an asset register: serial, model, CPU, RAM, disk, MAC, IP and who's logged in. Anything unreachable goes in a separate list with the reason. | `ActiveDirectory` module, WinRM on the targets, local admin |
+| `Update-ScheduledTaskCredential.ps1` | Fixes scheduled tasks after a service account password change, or better, moves them to a gMSA so there's no password to manage at all. | `ScheduledTasks` module, local admin |
+| `Sync-FolderToS3.ps1` | A logged, unattended backup to Amazon S3 that checks credentials, the bucket and the source folder before it starts. Has `-DryRun`, and a `-Mirror` option that won't run against an empty folder. | AWS CLI v2 with a named profile |
 
 ### KQL hunting queries
 
-Twelve Microsoft Sentinel queries mapped to MITRE ATT&CK (password spray, MFA fatigue, legacy auth, new-country sign-in, privileged role changes, illicit consent, rogue MFA registration, Kerberoasting, AD brute force, Tier 0 group changes, BEC inbox rules, mass download). See **[SC-200-Threat-Hunting/README.md](SC-200-Threat-Hunting/README.md)**.
+Twelve queries for Microsoft Sentinel: password spray, MFA fatigue, legacy sign-ins, sign-ins from a new country, admin role changes, risky app consent, MFA registered from an unknown IP, Kerberoasting, AD brute force, Domain Admins changes, suspicious inbox rules and mass downloads. Details are in **[SC-200-Threat-Hunting/README.md](SC-200-Threat-Hunting/README.md)**.
 
 ---
 
-## Quick start
+## Getting started
 
 ```powershell
 git clone https://github.com/karthksai027/identity-secops-automation.git
 cd identity-secops-automation
 
-# Every script has full help
+# Every script has built-in help
 Get-Help .\Entra-ID-Governance\Get-EntraMfaStrengthReport.ps1 -Full
 ```
 
-**Active Directory scripts** (domain-joined admin workstation or server):
+**Active Directory** (run from a domain-joined admin machine):
 
 ```powershell
 Install-WindowsFeature RSAT-AD-PowerShell                                                   # Windows Server
@@ -137,7 +150,7 @@ Get-WindowsCapability -Online -Name Rsat.ActiveDirectory* | Add-WindowsCapabilit
 .\Identity-Security-Posture\Get-ADSecurityPostureSummary.ps1 -ExportDetails
 ```
 
-**Entra ID scripts** only need the Graph authentication module. They call the Graph REST API directly, so there is no dependency on the large Graph SDK sub-modules:
+**Entra ID.** These only need the Graph authentication module. They call the Graph API directly, so you don't have to install the whole SDK.
 
 ```powershell
 Install-Module Microsoft.Graph.Authentication -Scope CurrentUser
@@ -146,63 +159,64 @@ Install-Module Microsoft.Graph.Authentication -Scope CurrentUser
 .\Entra-ID-Governance\Get-EntraPrivilegedRoleReport.ps1 | Where-Object Findings
 ```
 
-Each script signs you in with only the scopes it needs, or reuses your existing `Connect-MgGraph` session and warns if a scope is missing.
+Each script asks only for the permissions it needs. If you're already connected, it reuses your session and tells you if something's missing.
 
-**Exchange Online scripts:**
+**Exchange Online:**
 
 ```powershell
 Install-Module ExchangeOnlineManagement -Scope CurrentUser
 .\M365-Security-Operations\Get-MailboxForwardingAudit.ps1
 ```
 
-**Incident response (always rehearse with -WhatIf):**
+**Incident response.** Always do a dry run first.
 
 ```powershell
 .\M365-Security-Operations\Invoke-CompromisedAccountResponse.ps1 -UserPrincipalName jdoe@contoso.com -IncludeMailbox
 .\M365-Security-Operations\Invoke-CompromisedAccountResponse.ps1 -UserPrincipalName jdoe@contoso.com -Contain -ConfirmCompromised -RemediateMailbox -WhatIf
 ```
 
-All reports are written to `.\Reports` (or `-OutputDirectory`) as timestamped CSV files and returned as objects, so you can pipe them into `Where-Object`, `Export-Excel` or Sentinel watchlists.
+Reports land in `.\Reports` (or wherever you point `-OutputDirectory`) as dated CSV files. Each script also returns objects, so you can pipe the results straight into `Where-Object` or `Export-Excel`.
 
-For scheduled runs, see **[docs/Unattended-Authentication.md](docs/Unattended-Authentication.md)** (certificate-based app auth, managed identity, gMSA).
-
----
-
-## Engineering standards
-
-- **Read-only by default.** Only three scripts can change anything. Each needs an explicit switch and supports `-WhatIf` (or `-DryRun` for the S3 sync).
-- **Least privilege.** Every script documents the minimum Graph scopes and directory roles. None needs Global Administrator.
-- **No secrets in code.** Credentials are prompted, come from a profile, certificate or managed identity, or are avoided entirely with gMSA.
-- **Consistent interface.** `Verb-Noun` names with approved verbs, `[CmdletBinding()]`, full comment-based help, `-OutputDirectory`, objects on the pipeline.
-- **Tested.** PSScriptAnalyzer (PowerShell 5.1 and 7 syntax compatibility) and Pester run on every push. All 19 scripts were also run end-to-end against simulated (mocked) AD, Graph, Exchange Online and AWS CLI data, not a live tenant, and every KQL query was validated with the Kusto parser against its table schema.
+Want to run them on a schedule without storing passwords? See **[docs/Unattended-Authentication.md](docs/Unattended-Authentication.md)**.
 
 ---
 
-## Safety disclaimer
+## How I built it
 
-- **Test first** in a lab or non-production tenant before running in production.
-- **Containment actions are disruptive.** `Invoke-CompromisedAccountResponse.ps1 -Contain` blocks a user and revokes their sessions. Follow your incident response process and change control.
-- **`Sync-FolderToS3.ps1 -Mirror` deletes** objects in S3 that no longer exist locally. Run with `-DryRun` first and enable S3 Versioning on the bucket.
-- **Protect the output.** Reports contain names, email addresses, hostnames, IP and MAC addresses. Store them on access-controlled shares and never commit them. `.gitignore` blocks CSV, HTML, log and case folders.
-- **Heuristics need review.** Findings such as "inactive" or "high-risk permission" are prompts for a human decision, not automatic verdicts.
-- **No warranty.** Provided as-is under the MIT License.
-
----
-
-## Roadmap
-
-- [ ] Entra ID access review automation (create and report on reviews through Graph)
-- [ ] Lifecycle Workflows for joiner / mover / leaver
-- [ ] Windows Server 2022 hardening checks (SMBv1, LLMNR, NTLM auditing, LAPS coverage, Credential Guard)
-- [ ] Defender XDR advanced hunting versions of the KQL queries
-- [ ] Sentinel analytics rules as ARM / Bicep templates
+- **Look, don't touch.** Almost everything here only reads. The three scripts that can change something need an explicit switch, and they support `-WhatIf` (or `-DryRun` for the S3 backup).
+- **Least privilege.** Each script lists the smallest set of permissions it needs. None of them need Global Administrator.
+- **No passwords in code.** That's where the original desktop scripts went wrong. Credentials are now prompted for, come from a certificate or managed identity, or disappear entirely with a gMSA.
+- **Same shape everywhere.** Approved `Verb-Noun` names, full `Get-Help`, the same `-OutputDirectory` switch, and objects you can pipe.
+- **Checked on every push.** GitHub Actions runs PSScriptAnalyzer and Pester whenever I push a change. Before publishing, I also ran all 19 scripts end to end against simulated AD, Graph, Exchange Online and AWS data (not a live tenant), and checked every KQL query against its table schema.
 
 ---
 
-## Author
+## Before you run anything
 
-Windows Server 2022 Administrator and Microsoft Entra ID Global Administrator, moving into Cloud Identity and Security Operations. Completing **SC-300** and **SC-200**.
+- **Try it in a lab first.** These are written to be safe, but your environment isn't mine.
+- **Containment is disruptive.** `Invoke-CompromisedAccountResponse.ps1 -Contain` locks a person out. Follow your own incident process.
+- **`Sync-FolderToS3.ps1 -Mirror` deletes** files in S3 that are gone locally. Run `-DryRun` first and turn on S3 versioning.
+- **The reports are sensitive.** They hold names, emails, hostnames, IPs and MAC addresses. Keep them somewhere locked down. The `.gitignore` stops them being committed by accident.
+- **A finding is a prompt, not a verdict.** "Inactive" or "high-risk" means "go and look", not "delete it".
+- **No warranty.** MIT licensed, use at your own risk.
 
+---
+
+## What I'm working on next
+
+- [ ] Automating Entra ID access reviews through Graph
+- [ ] Joiner / mover / leaver with Lifecycle Workflows
+- [ ] Windows Server 2022 hardening checks (SMBv1, LLMNR, NTLM, LAPS, Credential Guard)
+- [ ] Defender XDR versions of the hunting queries
+- [ ] Sentinel analytics rules as Bicep templates
+
+---
+
+## About me
+
+I'm Karthik. I work as a Windows Server 2022 administrator and Microsoft Entra ID Global Administrator, and I'm moving into cloud identity and security operations. I'm currently studying for **SC-300** and **SC-200**.
+
+If you spot a bug or have an idea, open an issue. I'd like to hear it.
 
 ## License
 

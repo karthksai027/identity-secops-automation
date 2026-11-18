@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : On-premises AD brute force and account lockouts
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1110 Brute Force
 // Data source : SecurityEvent (Event IDs 4625 failed logon, 4740 account locked out)
 // Description : Summarises failed logons by source and target, separating single-account

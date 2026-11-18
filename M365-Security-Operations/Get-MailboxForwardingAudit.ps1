@@ -34,8 +34,13 @@
     .\Get-MailboxForwardingAudit.ps1 -Identity user1@contoso.com, user2@contoso.com
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Module      : ExchangeOnlineManagement (v3)
     Role        : Global Reader, Security Reader or Exchange View-Only Organization Management
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

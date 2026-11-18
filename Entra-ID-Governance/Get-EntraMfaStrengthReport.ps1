@@ -43,11 +43,16 @@
     .\Get-EntraMfaStrengthReport.ps1 -Source PerUser -Verbose
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Module      : Microsoft.Graph.Authentication
     Scopes      : Report  -> AuditLog.Read.All, UserAuthenticationMethod.Read.All
                   PerUser -> User.Read.All, UserAuthenticationMethod.Read.All, RoleManagement.Read.Directory
     Entra role  : Global Reader, Security Reader or Reports Reader (least privilege, read-only)
     Licence     : Report source requires Microsoft Entra ID P1 or P2.
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

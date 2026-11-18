@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : New Entra ID privileged role assignments (active, eligible, PIM activation)
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1098.003 Account Manipulation: Additional Cloud Roles
 // Data source : AuditLogs (Entra ID diagnostic settings)
 // Description : Attackers who gain admin access often grant themselves or a backdoor account

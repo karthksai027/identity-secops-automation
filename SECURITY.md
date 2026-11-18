@@ -1,17 +1,12 @@
-# Security Policy
+# Security
 
-## Reporting a vulnerability
+## Found a problem?
 
-If you find a security issue in these scripts (for example a way they could leak credentials or
-make an unintended change), please **do not open a public issue**. Use GitHub's
-[private vulnerability reporting](../../security/advisories/new) for this repository instead.
+If you find a security issue in these scripts, such as a way they could leak credentials or change something they shouldn't, please don't open a public issue. Use GitHub's [private vulnerability reporting](../../security/advisories/new) on this repo and I'll look at it as soon as I can.
 
-## Design principles
+## How I've tried to keep this safe
 
-- **Read-only by default.** Only `Invoke-CompromisedAccountResponse.ps1`, `Update-ScheduledTaskCredential.ps1`
-  and `Sync-FolderToS3.ps1` can change anything. All of them support `-WhatIf` and/or require an explicit switch.
-- **No secrets in code.** Credentials are prompted (`Get-Credential`), taken from a named profile, or come
-  from a managed identity / certificate. CI fails if a hard-coded secret pattern is detected.
-- **Least privilege.** Each script documents the minimum Microsoft Graph scopes and Entra / AD roles it needs.
-- **Output is sensitive.** Reports contain identities, IP and MAC addresses. `.gitignore` blocks CSV, HTML,
-  log and case folders from being committed.
+- **Read-only unless you say otherwise.** Only three scripts can change anything: `Invoke-CompromisedAccountResponse.ps1`, `Update-ScheduledTaskCredential.ps1` and `Sync-FolderToS3.ps1`. Each one needs an explicit switch and supports `-WhatIf` or `-DryRun`.
+- **No secrets in the code.** Credentials are prompted for, come from a named profile, or come from a certificate or managed identity. The automated tests fail if they spot a hard-coded password or key.
+- **Least privilege.** Every script says exactly which Graph permissions and admin roles it needs, and none of them need Global Administrator.
+- **The output is sensitive.** Reports contain people's names, email addresses, IPs and MAC addresses. The `.gitignore` blocks CSV, HTML, log and case folders so they don't end up in a commit by mistake.

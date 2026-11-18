@@ -35,10 +35,15 @@
     .\Get-EntraPrivilegedRoleReport.ps1 | Where-Object Findings | Format-Table Role, Principal, AssignmentType, Findings
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Module      : Microsoft.Graph.Authentication
     Scopes      : RoleManagement.Read.Directory, Directory.Read.All, AuditLog.Read.All
     Entra role  : Global Reader or Privileged Role Administrator (read)
     Licence     : P1 for sign-in activity, P2 for PIM data.
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

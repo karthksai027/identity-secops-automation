@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : MFA / security info registered from an IP the user has never signed in from
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1098.005 Account Manipulation: Device Registration
 // Data source : AuditLogs, SigninLogs
 // Description : After phishing a session, attackers register their own authenticator or phone

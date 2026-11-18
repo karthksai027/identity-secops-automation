@@ -61,12 +61,17 @@
     Shows every containment action without making changes.
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Module      : Microsoft.Graph.Authentication (+ ExchangeOnlineManagement, ActiveDirectory optional)
     Scopes      : User.ReadWrite.All, AuditLog.Read.All, UserAuthenticationMethod.Read.All,
                   RoleManagement.Read.Directory, IdentityRiskyUser.ReadWrite.All
     Entra role  : Evidence - Security Reader / Global Reader.
                   Containment - User Administrator (Privileged Authentication Administrator if the
                   target holds an admin role) and Security Operator for Identity Protection.
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

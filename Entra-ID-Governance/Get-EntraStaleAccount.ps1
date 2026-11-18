@@ -33,10 +33,15 @@
     .\Get-EntraStaleAccount.ps1 -UserType Guest -DaysInactive 60
 
 .NOTES
+    Author      : Karthik (github.com/karthksai027)
+    Project     : Karthik's Identity & SecOps Toolkit
     Module      : Microsoft.Graph.Authentication
     Scopes      : User.Read.All, AuditLog.Read.All
     Entra role  : Global Reader, Reports Reader or Security Reader
     Licence     : signInActivity requires Microsoft Entra ID P1 or P2.
+
+.LINK
+    https://github.com/karthksai027/identity-secops-automation
 #>
 
 #Requires -Version 5.1

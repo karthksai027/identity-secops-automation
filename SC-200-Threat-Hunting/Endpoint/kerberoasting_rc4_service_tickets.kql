@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : Kerberoasting - burst of RC4 service ticket requests from one account
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1558.003 Steal or Forge Kerberos Tickets: Kerberoasting
 // Data source : SecurityEvent (domain controllers, Event ID 4769) via Azure Monitor Agent
 //               with "Common" or "All Events" collection. Microsoft Defender for Identity also

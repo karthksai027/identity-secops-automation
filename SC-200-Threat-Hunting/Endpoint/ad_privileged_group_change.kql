@@ -1,5 +1,6 @@
 // =====================================================================================
 // Title       : Member added to a privileged on-premises AD group
+// Author      : Karthik (github.com/karthksai027) - Karthik's Identity & SecOps Toolkit
 // MITRE ATT&CK: T1098 Account Manipulation
 // Data source : SecurityEvent (domain controllers) - 4728 global, 4732 local, 4756 universal group member added
 // Description : Any change to Domain Admins, Enterprise Admins and the other Tier 0 groups
