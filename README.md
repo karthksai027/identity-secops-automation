@@ -35,7 +35,12 @@ This repo is the result. It's what I'd want to hand to the next admin who inheri
 | **Entra ID** | MFA strength, standing admin access, stale guests, Conditional Access gaps, expiring app secrets, risky app permissions, tenant settings | `Entra-ID-Governance` |
 | **Hybrid identity** | Synced admin accounts that should be cloud-only, whether Entra Connect sync is healthy, and disabling the on-prem account during an incident so the next sync doesn't undo it | `Entra-ID-Governance`, `M365-Security-Operations` |
 | **Incident response** | What to do in the first hour when an account looks compromised, and where attackers hide mail rules | `M365-Security-Operations` |
-| **Detection** | 12 KQL queries for Microsoft Sentinel, each mapped to MITRE ATT&CK | `SC-200-Threat-Hunting` |
+| **Defender XDR** | Which incidents are open and unowned, which devices Defender can't actually protect, and running hunting queries from PowerShell | `Defender-XDR` |
+| **Data protection** | Which DLP policies are really enforced, which workloads and sensitive data types (including PAN and Aadhaar) nobody is covering, and whether sensitivity labels are published | `Purview-DLP` |
+| **Single sign-on** | SAML certificates about to expire, SSO apps any user can sign in to, password-based SSO, unused apps | `Entra-ID-Governance` |
+| **OAuth 2.0, OIDC & SAML** | Which app registrations allow risky OAuth flows or unsafe redirect URIs, what's inside a token or SAML assertion when sign-in fails, and whether a federation certificate is about to roll | `Entra-ID-Governance`, `Identity-Protocols` |
+| **Intune** | Non-compliant, unencrypted or stale devices, and Autopilot devices that never enrolled | `Intune-Endpoint-Management` |
+| **Detection** | 16 KQL queries for Microsoft Sentinel and Defender XDR, each mapped to MITRE ATT&CK | `SC-200-Threat-Hunting` |
 | **Day-to-day ops** | Hardware inventory, service account passwords on scheduled tasks, offsite backup | `Endpoint-Asset-Inventory`, `Windows-Server-Operations`, `Cloud-Backup-Automation` |
 
 ---
@@ -59,14 +64,29 @@ This repo is the result. It's what I'd want to hand to the next admin who inheri
 │   ├── Export-EntraConditionalAccessPolicy.ps1
 │   ├── Get-EntraAppCredentialExpiry.ps1
 │   ├── Get-EntraRiskyAppPermission.ps1
-│   └── Test-EntraTenantSecurityBaseline.ps1
+│   ├── Test-EntraTenantSecurityBaseline.ps1
+│   ├── Get-EntraSsoAppReport.ps1
+│   └── Get-EntraAppRegistrationSecurityReport.ps1
+├── Identity-Protocols/
+│   ├── ConvertFrom-JwtToken.ps1
+│   ├── ConvertFrom-SamlResponse.ps1
+│   └── Test-SamlFederationMetadata.ps1
+├── Defender-XDR/
+│   ├── Get-DefenderIncidentSummary.ps1
+│   ├── Get-DefenderDeviceHealthReport.ps1
+│   └── Invoke-DefenderAdvancedHunting.ps1
+├── Purview-DLP/
+│   └── Get-PurviewDlpPolicyReport.ps1
+├── Intune-Endpoint-Management/
+│   └── Get-IntuneDeviceComplianceReport.ps1
 ├── M365-Security-Operations/
 │   ├── Get-MailboxForwardingAudit.ps1
 │   └── Invoke-CompromisedAccountResponse.ps1
 ├── SC-200-Threat-Hunting/                   # KQL, with its own README
-│   ├── Identity/                (7 queries)
+│   ├── Identity/                (8 queries)
 │   ├── Endpoint/                (3 queries)
-│   └── Email-and-Collaboration/ (2 queries)
+│   ├── Email-and-Collaboration/ (2 queries)
+│   └── Defender-XDR/            (3 queries)
 ├── Endpoint-Asset-Inventory/
 │   ├── Get-ADComputerInventory.ps1
 │   └── Get-ADHardwareInventory.ps1
@@ -74,7 +94,9 @@ This repo is the result. It's what I'd want to hand to the next admin who inheri
 │   └── Update-ScheduledTaskCredential.ps1
 ├── Cloud-Backup-Automation/
 │   └── Sync-FolderToS3.ps1
-├── docs/Unattended-Authentication.md
+├── docs/
+│   ├── Unattended-Authentication.md
+│   └── OAuth-OIDC-SAML-Guide.md
 ├── tests/Repository.Tests.ps1
 ├── .github/workflows/quality.yml
 ├── PSScriptAnalyzerSettings.psd1
@@ -108,6 +130,40 @@ This repo is the result. It's what I'd want to hand to the next admin who inheri
 | `Get-EntraAppCredentialExpiry.ps1` | Shows app secrets and certificates that have expired, are about to, or were set to last far too long. Also flags brand-new credentials and apps with no owner. | `Application.Read.All`. Global Reader. |
 | `Get-EntraRiskyAppPermission.ps1` | Looks at what every app is allowed to do in Microsoft Graph and Exchange Online and highlights the dangerous ones, especially third-party apps from unverified publishers. | `Application.Read.All`, `Directory.Read.All`. Global Reader. |
 | `Test-EntraTenantSecurityBaseline.ps1` | A pass/fail check of tenant settings: security defaults, Global Admin count, SMS and voice, FIDO2, guest invites, user consent, app registration, sync health and more. | `Policy.Read.All`, `RoleManagement.Read.Directory`, `Directory.Read.All`. Global Reader. |
+| `Get-EntraSsoAppReport.ps1` | Reviews every SSO enterprise app: SAML, OIDC or password-based, when the SAML signing certificate expires and whether anyone gets the expiry email, whether every user can sign in because "assignment required" is off, who owns it, and when it was last used. | `Application.Read.All`, `Directory.Read.All`, `AuditLog.Read.All`. Global Reader. P1 for usage data. |
+| `Get-EntraAppRegistrationSecurityReport.ps1` | Checks every app registration's OAuth and OIDC settings: implicit flow, "allow public client flows" (ROPC and device code), plain-HTTP or wildcard redirect URIs, redirect URIs on shared cloud domains that could be taken over, client secrets instead of certificates, multi-tenant exposure and missing owners. Riskiest apps first. | `Application.Read.All`. Global Reader. |
+
+### OAuth 2.0, OpenID Connect and SAML troubleshooting
+
+These run offline on your own machine. Nothing you paste is sent anywhere.
+
+| Script | What it does | You'll need |
+|---|---|---|
+| `ConvertFrom-JwtToken.ps1` | Decodes an access token or ID token and explains it: who it's for (`aud`), who it's about, delegated scopes vs app roles, how the user signed in (MFA or not), and how long it has left. `-VerifySignature` checks it against the issuer's published keys and catches tampered or forged tokens. | Nothing (network only for `-VerifySignature`) |
+| `ConvertFrom-SamlResponse.ps1` | Decodes a SAML response or request captured from the browser: status, NameID, audience, reply URL, validity window, every claim, and the signing certificate. Flags the usual SSO mistakes (wrong Identifier or Reply URL, expired assertion, SHA-1, wrong certificate) and `-VerifySignature` proves whether the assertion was altered. | Nothing |
+| `Test-SamlFederationMetadata.ps1` | Reads SAML metadata from a URL, a file, or straight from an Entra app (`-TenantId -AppId`) and reports the entity ID, endpoints and every signing certificate with days left, so you catch a certificate rollover before SSO breaks. | Nothing (network to fetch a URL) |
+
+My notes on the three protocols, the flows, the claims and the error codes I see most are in **[docs/OAuth-OIDC-SAML-Guide.md](docs/OAuth-OIDC-SAML-Guide.md)**.
+
+### Microsoft Defender XDR
+
+| Script | What it does | Graph permissions / role |
+|---|---|---|
+| `Get-DefenderIncidentSummary.ps1` | A morning triage list: open incidents sorted by severity, with anything high-severity, unassigned, or open too long called out, plus a breakdown of which Defender product raised each alert. | `SecurityIncident.Read.All`. Security Reader. |
+| `Get-DefenderDeviceHealthReport.ps1` | Finds devices Defender for Endpoint can't properly protect: discovered but never onboarded, sensor inactive or misconfigured, not reporting for a week, high exposure or internet facing. | `ThreatHunting.Read.All`. Security Reader. |
+| `Invoke-DefenderAdvancedHunting.ps1` | Runs any advanced hunting query, inline or from `.kql` files, and saves each result to CSV. Point it at `SC-200-Threat-Hunting\Defender-XDR` to run the whole set in one go. | `ThreatHunting.Read.All`. Security Reader. |
+
+### Microsoft Purview DLP
+
+| Script | What it does | You'll need |
+|---|---|---|
+| `Get-PurviewDlpPolicyReport.ps1` | Lists every DLP policy and rule with its mode, workloads, sensitive information types and whether it blocks. Then checks coverage: Exchange, SharePoint, OneDrive, Teams and Endpoint without an enforced policy, policies stuck in test mode, rules that never block, uncovered data types (card numbers, IBAN, PAN and Aadhaar by default) and published sensitivity labels. | `ExchangeOnlineManagement` v3 (`Connect-IPPSSession`). Compliance Administrator or Global Reader. |
+
+### Microsoft Intune
+
+| Script | What it does | Graph permissions / role |
+|---|---|---|
+| `Get-IntuneDeviceComplianceReport.ps1` | Every managed device with its compliance state, flagging non-compliant, grace period, no check-in for 30 days, not encrypted, jailbroken and personal devices. `-IncludeAutopilot` adds Autopilot devices that were registered but never enrolled. | `DeviceManagementManagedDevices.Read.All` (+ `DeviceManagementServiceConfig.Read.All`). Intune read-only role or Global Reader. |
 
 ### Microsoft 365 incident response
 
@@ -127,7 +183,7 @@ This repo is the result. It's what I'd want to hand to the next admin who inheri
 
 ### KQL hunting queries
 
-Twelve queries for Microsoft Sentinel: password spray, MFA fatigue, legacy sign-ins, sign-ins from a new country, admin role changes, risky app consent, MFA registered from an unknown IP, Kerberoasting, AD brute force, Domain Admins changes, suspicious inbox rules and mass downloads. Details are in **[SC-200-Threat-Hunting/README.md](SC-200-Threat-Hunting/README.md)**.
+Thirteen queries for Microsoft Sentinel (password spray, MFA fatigue, device code and ROPC sign-ins, legacy sign-ins, sign-ins from a new country, admin role changes, risky app consent, MFA registered from an unknown IP, Kerberoasting, AD brute force, Domain Admins changes, suspicious inbox rules and mass downloads) and three for Defender XDR advanced hunting (PowerShell download cradles, users who clicked a phishing link, and repeat DLP offenders). Details are in **[SC-200-Threat-Hunting/README.md](SC-200-Threat-Hunting/README.md)**.
 
 ---
 
@@ -188,7 +244,7 @@ Want to run them on a schedule without storing passwords? See **[docs/Unattended
 - **Least privilege.** Each script lists the smallest set of permissions it needs. None of them need Global Administrator.
 - **No passwords in code.** That's where the original desktop scripts went wrong. Credentials are now prompted for, come from a certificate or managed identity, or disappear entirely with a gMSA.
 - **Same shape everywhere.** Approved `Verb-Noun` names, full `Get-Help`, the same `-OutputDirectory` switch, and objects you can pipe.
-- **Checked on every push.** GitHub Actions runs PSScriptAnalyzer and Pester whenever I push a change. Before publishing, I also ran all 19 scripts end to end against simulated AD, Graph, Exchange Online and AWS data (not a live tenant), and checked every KQL query against its table schema.
+- **Checked on every push.** GitHub Actions runs PSScriptAnalyzer and Pester whenever I push a change. Before publishing, I also ran all 29 scripts end to end against simulated AD, Graph, Exchange Online and AWS data (not a live tenant), tested the token and SAML tools with tokens and assertions I signed myself (including tampered and forged ones), and checked every KQL query against its table schema.
 
 ---
 
@@ -208,7 +264,7 @@ Want to run them on a schedule without storing passwords? See **[docs/Unattended
 - [ ] Automating Entra ID access reviews through Graph
 - [ ] Joiner / mover / leaver with Lifecycle Workflows
 - [ ] Windows Server 2022 hardening checks (SMBv1, LLMNR, NTLM, LAPS, Credential Guard)
-- [ ] Defender XDR versions of the hunting queries
+- [ ] More Defender XDR hunting queries (identity and cloud apps)
 - [ ] Sentinel analytics rules as Bicep templates
 
 ---
