@@ -6,7 +6,7 @@ PowerShell and KQL for Active Directory and Microsoft Entra ID governance, ident
 ![Microsoft Graph](https://img.shields.io/badge/Microsoft%20Graph-REST-0078D4?logo=microsoft&logoColor=white)
 ![KQL](https://img.shields.io/badge/KQL-Microsoft%20Sentinel-0078D4)
 ![Focus](https://img.shields.io/badge/Focus-SC--300%20%7C%20SC--200-2E7D32)
-![Quality](https://github.com/<your-username>/identity-secops-automation/actions/workflows/quality.yml/badge.svg)
+![Quality](https://github.com/karthksai027/identity-secops-automation/actions/workflows/quality.yml/badge.svg)
 
 ---
 
@@ -120,7 +120,7 @@ Twelve Microsoft Sentinel queries mapped to MITRE ATT&CK (password spray, MFA fa
 ## Quick start
 
 ```powershell
-git clone https://github.com/<your-username>/identity-secops-automation.git
+git clone https://github.com/karthksai027/identity-secops-automation.git
 cd identity-secops-automation
 
 # Every script has full help
@@ -203,7 +203,6 @@ For scheduled runs, see **[docs/Unattended-Authentication.md](docs/Unattended-Au
 
 Windows Server 2022 Administrator and Microsoft Entra ID Global Administrator, moving into Cloud Identity and Security Operations. Completing **SC-300** and **SC-200**.
 
-[LinkedIn](https://www.linkedin.com/in/<your-profile>) · [Microsoft Learn transcript](https://learn.microsoft.com/users/<your-profile>/transcript)
 
 ## License
 
