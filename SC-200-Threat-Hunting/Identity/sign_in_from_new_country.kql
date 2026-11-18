@@ -1,0 +1,34 @@
+// =====================================================================================
+// Title       : Successful sign-in from a country never seen for the user
+// MITRE ATT&CK: T1078.004 Valid Accounts: Cloud Accounts
+// Data source : SigninLogs
+// Description : Builds a 30-day baseline of countries each user successfully signs in from,
+//               then flags successful sign-ins in the last day from a new country. Lighter
+//               and more explainable than impossible travel; good triage starting point.
+// Tuning      : Exclude travelling users or VPN egress countries; require MFA-less sign-ins
+//               (AuthenticationRequirement == "singleFactorAuthentication") for higher fidelity.
+// =====================================================================================
+let BaselineStart = 30d;
+let DetectionWindow = 1d;
+let Baseline = SigninLogs
+    | where TimeGenerated between (ago(BaselineStart) .. ago(DetectionWindow))
+    | where ResultType == "0"
+    | extend Country = tostring(LocationDetails.countryOrRegion)
+    | where isnotempty(Country)
+    | summarize KnownCountries = make_set(Country, 50) by UserPrincipalName;
+SigninLogs
+| where TimeGenerated > ago(DetectionWindow)
+| where ResultType == "0"
+| extend Country = tostring(LocationDetails.countryOrRegion), City = tostring(LocationDetails.city)
+| where isnotempty(Country)
+| join kind=inner Baseline on UserPrincipalName
+| where not(set_has_element(KnownCountries, Country))
+| summarize
+    FirstSeen = min(TimeGenerated),
+    SignIns = count(),
+    IPs = make_set(IPAddress, 10),
+    Apps = make_set(AppDisplayName, 10),
+    AuthRequirement = make_set(AuthenticationRequirement, 2),
+    RiskLevels = make_set(RiskLevelDuringSignIn, 5)
+    by UserPrincipalName, Country, City, KnownCountryList = tostring(KnownCountries)
+| order by FirstSeen desc

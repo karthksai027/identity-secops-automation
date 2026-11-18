@@ -1,0 +1,34 @@
+// =====================================================================================
+// Title       : Unusual volume of SharePoint / OneDrive file downloads (possible exfiltration)
+// MITRE ATT&CK: T1530 Data from Cloud Storage; T1567 Exfiltration Over Web Service
+// Data source : OfficeActivity (SharePoint workload)
+// Description : Compares each user's downloads in the last day with their own 14-day daily
+//               average and flags large spikes - typical of a departing employee or an
+//               attacker using a stolen session.
+// Tuning      : Adjust MinDownloads and SpikeFactor; exclude backup / migration service accounts.
+// =====================================================================================
+let DetectionWindow = 1d;
+let BaselineWindow = 14d;
+let MinDownloads = 100;
+let SpikeFactor = 5.0;
+let Baseline = OfficeActivity
+    | where TimeGenerated between (ago(DetectionWindow + BaselineWindow) .. ago(DetectionWindow))
+    | where OfficeWorkload in ("SharePoint", "OneDrive") and Operation in ("FileDownloaded", "FileSyncDownloadedFull")
+    | summarize BaselineTotal = count() by UserId
+    | extend DailyAverage = todouble(BaselineTotal) / (BaselineWindow / 1d);
+OfficeActivity
+| where TimeGenerated > ago(DetectionWindow)
+| where OfficeWorkload in ("SharePoint", "OneDrive") and Operation in ("FileDownloaded", "FileSyncDownloadedFull")
+| summarize
+    Downloads = count(),
+    DistinctFiles = dcount(OfficeObjectId),
+    Sites = make_set(Site_Url, 10),
+    IPs = make_set(ClientIP, 10),
+    UserAgents = make_set(UserAgent, 5)
+    by UserId
+| join kind=leftouter Baseline on UserId
+| extend DailyAverage = coalesce(DailyAverage, 0.0)
+| where Downloads >= MinDownloads and Downloads > DailyAverage * SpikeFactor
+| extend SpikeRatio = iff(DailyAverage > 0, round(Downloads / DailyAverage, 1), real(null))
+| project UserId, Downloads, DistinctFiles, DailyAverage = round(DailyAverage, 1), SpikeRatio, Sites, IPs, UserAgents
+| order by Downloads desc

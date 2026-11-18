@@ -1,0 +1,27 @@
+// =====================================================================================
+// Title       : Member added to a privileged on-premises AD group
+// MITRE ATT&CK: T1098 Account Manipulation
+// Data source : SecurityEvent (domain controllers) - 4728 global, 4732 local, 4756 universal group member added
+// Description : Any change to Domain Admins, Enterprise Admins and the other Tier 0 groups
+//               should be rare and pre-approved. Run as a near-real-time analytics rule.
+//               Complements Active-Directory-Governance/Get-ADPrivilegedGroupMember.ps1 (state)
+//               with change detection (events).
+// =====================================================================================
+let Lookback = 7d;
+let PrivilegedGroups = dynamic([
+    "Domain Admins", "Enterprise Admins", "Schema Admins", "Administrators", "Account Operators",
+    "Server Operators", "Backup Operators", "Print Operators", "Group Policy Creator Owners",
+    "DnsAdmins", "Key Admins", "Enterprise Key Admins", "Protected Users"
+]);
+SecurityEvent
+| where TimeGenerated > ago(Lookback)
+| where EventID in (4728, 4732, 4756)
+| where TargetUserName in~ (PrivilegedGroups)   // for these events TargetUserName is the group
+| project TimeGenerated,
+          Group = TargetUserName,
+          MemberAdded = MemberName,
+          MemberSid = MemberSid,
+          ChangedBy = strcat(SubjectDomainName, "\\", SubjectUserName),
+          DomainController = Computer,
+          EventID
+| order by TimeGenerated desc

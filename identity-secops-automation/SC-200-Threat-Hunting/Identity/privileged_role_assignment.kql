@@ -1,0 +1,32 @@
+// =====================================================================================
+// Title       : New Entra ID privileged role assignments (active, eligible, PIM activation)
+// MITRE ATT&CK: T1098.003 Account Manipulation: Additional Cloud Roles
+// Data source : AuditLogs (Entra ID diagnostic settings)
+// Description : Attackers who gain admin access often grant themselves or a backdoor account
+//               a directory role. This query lists every role assignment change with who did
+//               it and highlights Tier 0 roles and assignments made outside PIM.
+// Tuning      : Schedule as an analytics rule; alert on HighlyPrivileged == true.
+// =====================================================================================
+let Lookback = 7d;
+let Tier0Roles = dynamic([
+    "Global Administrator", "Privileged Role Administrator", "Privileged Authentication Administrator",
+    "Security Administrator", "Conditional Access Administrator", "Application Administrator",
+    "Cloud Application Administrator", "Hybrid Identity Administrator", "User Administrator",
+    "Exchange Administrator", "SharePoint Administrator", "Intune Administrator"
+]);
+AuditLogs
+| where TimeGenerated > ago(Lookback)
+| where Category == "RoleManagement"
+| where OperationName has "member to role"
+| extend Initiator = coalesce(tostring(InitiatedBy.user.userPrincipalName), tostring(InitiatedBy.app.displayName))
+| extend InitiatorIP = tostring(InitiatedBy.user.ipAddress)
+| extend Target = coalesce(tostring(TargetResources[0].userPrincipalName), tostring(TargetResources[0].displayName))
+| extend TargetType = tostring(TargetResources[0].type)
+| mv-expand Prop = TargetResources[0].modifiedProperties
+| where tostring(Prop.displayName) == "Role.DisplayName"
+| extend Role = trim(@'"', tostring(Prop.newValue))
+| extend HighlyPrivileged = Role in (Tier0Roles)
+| extend ViaPIM = OperationName has "PIM" or OperationName has "eligible" or LoggedByService == "PIM"
+| project TimeGenerated, OperationName, Result, Role, HighlyPrivileged, Target, TargetType,
+          Initiator, InitiatorIP, ViaPIM, CorrelationId
+| order by HighlyPrivileged desc, TimeGenerated desc
