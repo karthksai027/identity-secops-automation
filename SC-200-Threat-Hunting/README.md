@@ -1,6 +1,6 @@
 # Threat hunting queries (KQL)
 
-These are the Microsoft Sentinel queries I wrote while studying for SC-200. Each one goes after an attack I'd actually expect to see against an Active Directory and Entra ID environment: someone spraying passwords, spamming MFA prompts, sneaking an app consent through, or hiding mail with an inbox rule.
+These are the Microsoft Sentinel queries I wrote while studying for SC-200. Each one goes after an attack I'd actually expect to see against a hybrid Active Directory and Entra ID environment: someone spraying passwords, spamming MFA prompts, sneaking an app consent through, or hiding mail with an inbox rule.
 
 Every file starts with a short header: what it looks for, the MITRE ATT&CK technique, which table it needs, how to tune it, and what to do if it fires. I checked each query with the Kusto parser against the columns of the tables it uses.
 
