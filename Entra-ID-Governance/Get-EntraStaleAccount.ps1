@@ -86,7 +86,7 @@ function Invoke-GraphPaged {
         else { $items.Add($resp) }
         $Uri = $resp.'@odata.nextLink'
     }
-    , $items
+    , $items.ToArray()
 }
 #endregion
 
