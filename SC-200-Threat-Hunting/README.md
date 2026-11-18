@@ -43,6 +43,8 @@ These three run in the Defender portal (Hunting > Advanced hunting) rather than 
 
 ## How I use them
 
+A good query is a quiet one. Tune until it only speaks up when it matters.
+
 1. **Hunt.** Paste a query into Sentinel > Logs, change the `let` values at the top to suit your environment, and run it.
 2. **Alert.** Once a query is quiet enough, turn it into a scheduled analytics rule and map the account and IP so incidents link up.
 3. **Respond.** Each header points to the matching script in this repo, for example `Invoke-CompromisedAccountResponse.ps1` for a suspected account takeover.
